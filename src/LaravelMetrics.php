@@ -205,7 +205,7 @@ class LaravelMetrics
      * @param  string|null $whereRaw
      * @return int
      */
-    public function getMetrics(string $table, string $column, string $period, string $type, ?string $whereRaw = null): int
+    public static function getMetrics(string $table, string $column, string $period, string $type, ?string $whereRaw = null): int
     {
         $metricsData = self::getMetricsData($table, $column, $period, $type, $whereRaw);
 
