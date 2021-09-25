@@ -16,8 +16,11 @@ composer require eliseekn/laravel-metrics
 ## Usage
 
 ```php
+//generate user count trends for your chart
 $userTrends = LaravelMetrics::getTrends('users', 'id', LaravelMetrics::YEAR, LaravelMetrics::COUNT);
-$userMetrics = LaravelMetrics::getMetrics('users', 'expenses', LaravelMetrics::TODAY, LaravelMetrics::SUM);
+
+//track expenses for a specific period
+$expensesMetrics = LaravelMetrics::getMetrics('expenses', 'amount', LaravelMetrics::QUATER_YEAR, LaravelMetrics::SUM);
 ```
 
 ### Testing

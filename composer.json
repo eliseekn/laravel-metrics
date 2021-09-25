@@ -20,10 +20,10 @@
     "minimum-stability": "dev",
     "require": {
         "php": "^7.4|^8.0",
-        "illuminate/support": "^8.0"
+        "illuminate/support": "^8.0",
+        "nesbot/carbon": "2.x-dev"
     },
     "require-dev": {
-        "orchestra/testbench": "^6.0",
         "phpunit/phpunit": "^9.0"
     },
     "autoload": {
@@ -37,18 +37,13 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/phpunit",
-        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
-
+        "test": "vendor/bin/phpunit"
     },
     "config": {
         "sort-packages": true
     },
     "extra": {
         "laravel": {
-            "providers": [
-                "Eliseekn\\LaravelMetrics\\LaravelMetricsServiceProvider"
-            ],
             "aliases": {
                 "LaravelMetrics": "Eliseekn\\LaravelMetrics\\LaravelMetricsFacade"
             }

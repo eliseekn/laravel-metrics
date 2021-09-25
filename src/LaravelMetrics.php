@@ -2,6 +2,7 @@
 
 namespace Eliseekn\LaravelMetrics;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -27,15 +28,15 @@ class LaravelMetrics
 
     private static function getMetricsData(string $table, string $column, string $period, string $type, ?string $whereRaw = null)
     {
-        $year = now()->year;
-        $month = now()->month;
-        $week = now()->weekOfYear;
+        $year = Carbon::now()->year;
+        $month = Carbon::now()->month;
+        $week = Carbon::now()->weekOfYear;
 
         switch($period) {
             case self::TODAY: 
                 return DB::table($table)
                     ->selectRaw("$type($column) as data")
-                    ->where(DB::raw('date(created_at)'), now()->toDateString())
+                    ->where(DB::raw('date(created_at)'), Carbon::now()->toDateString())
                     ->where(function ($q) use ($whereRaw) {
                         if (!is_null($whereRaw)) $q->whereRaw($whereRaw);
                     })
@@ -82,7 +83,7 @@ class LaravelMetrics
             case self::HALF_YEAR: 
                 return DB::table($table)
                     ->selectRaw("$type($column) as data")
-                    ->whereBetween(DB::raw('month(created_at)'), [now()->subMonths(6)->month, $month])
+                    ->whereBetween(DB::raw('month(created_at)'), [Carbon::now()->subMonths(6)->month, $month])
                     ->where(DB::raw('year(created_at)'), $year)
                     ->where(function ($q) use ($whereRaw) {
                         if (!is_null($whereRaw)) $q->whereRaw($whereRaw);
@@ -92,7 +93,7 @@ class LaravelMetrics
             case self::QUATER_YEAR: 
                 return DB::table($table)
                     ->selectRaw("$type($column) as data")
-                    ->whereBetween(DB::raw('month(created_at)'), [now()->subMonths(3)->month, $month])
+                    ->whereBetween(DB::raw('month(created_at)'), [Carbon::now()->subMonths(3)->month, $month])
                     ->where(DB::raw('year(created_at)'), $year)
                     ->where(function ($q) use ($whereRaw) {
                         if (!is_null($whereRaw)) $q->whereRaw($whereRaw);
@@ -105,15 +106,15 @@ class LaravelMetrics
 
     private static function getTrendsData(string $table, string $column, string $period, string $type, ?string $whereRaw = null)
     {
-        $year = now()->year;
-        $month = now()->month;
-        $week = now()->weekOfYear;
+        $year = Carbon::now()->year;
+        $month = Carbon::now()->month;
+        $week = Carbon::now()->weekOfYear;
 
         switch($period) {
             case self::TODAY: 
                 return DB::table($table)
                     ->selectRaw("$type($column) as data, dayname(created_at) as label, weekday(created_at) as week_day")
-                    ->where(DB::raw('date(created_at)'), now()->toDateString())
+                    ->where(DB::raw('date(created_at)'), Carbon::now()->toDateString())
                     ->where(function ($q) use ($whereRaw) {
                         if (!is_null($whereRaw)) $q->whereRaw($whereRaw);
                     })
@@ -170,7 +171,7 @@ class LaravelMetrics
             case self::HALF_YEAR: 
                 return DB::table($table)
                     ->selectRaw("$type($column) as data, monthname(created_at) as label, month(created_at) as month")
-                    ->whereBetween(DB::raw('month(created_at)'), [now()->subMonths(6)->month, $month])
+                    ->whereBetween(DB::raw('month(created_at)'), [Carbon::now()->subMonths(6)->month, $month])
                     ->where(DB::raw('year(created_at)'), $year)
                     ->where(function ($q) use ($whereRaw) {
                         if (!is_null($whereRaw)) $q->whereRaw($whereRaw);
@@ -182,7 +183,7 @@ class LaravelMetrics
             case self::QUATER_YEAR: 
                 return DB::table($table)
                     ->selectRaw("$type($column) as data, monthname(created_at) as label, month(created_at) as month")
-                    ->whereBetween(DB::raw('month(created_at)'), [now()->subMonths(3)->month, $month])
+                    ->whereBetween(DB::raw('month(created_at)'), [Carbon::now()->subMonths(3)->month, $month])
                     ->where(DB::raw('year(created_at)'), $year)
                     ->where(function ($q) use ($whereRaw) {
                         if (!is_null($whereRaw)) $q->whereRaw($whereRaw);
