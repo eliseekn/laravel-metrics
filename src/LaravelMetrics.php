@@ -31,6 +31,22 @@ class LaravelMetrics
         $year = Carbon::now()->year;
         $month = Carbon::now()->month;
         $week = Carbon::now()->weekOfYear;
+        
+        if (!in_array($period, [self::TODAY, self::DAY, self::WEEK, self::MONTH, self::YEAR, self::QUATER_YEAR, self::HALF_YEAR])) {
+            if (!str_contains('~', $period)) return null;
+            
+            list($start_date, $end_date) = explode('~', $period);
+            $start_date = Carbon::parse($start_date)->toDateString();
+            $end_date = Carbon::parse($end_date)->toDateString();
+
+            return DB::table($table)
+                ->selectRaw("$type($column) as data")
+                ->whereBetween(DB::raw('date(created_at)'), [$start_date, $end_date])
+                ->where(function ($q) use ($whereRaw) {
+                    if (!is_null($whereRaw)) $q->whereRaw($whereRaw);
+                })
+                ->first();
+        }
 
         switch($period) {
             case self::TODAY: 
@@ -109,6 +125,23 @@ class LaravelMetrics
         $year = Carbon::now()->year;
         $month = Carbon::now()->month;
         $week = Carbon::now()->weekOfYear;
+
+        if (!in_array($period, [self::TODAY, self::DAY, self::WEEK, self::MONTH, self::YEAR, self::QUATER_YEAR, self::HALF_YEAR])) {
+            if (!str_contains('~', $period)) return null;
+            
+            list($start_date, $end_date) = explode('~', $period);
+
+            $start_date = Carbon::parse($start_date)->toDateString();
+            $end_date = Carbon::parse($end_date)->toDateString();
+
+            return DB::table($table)
+                ->selectRaw("$type($column) as data, date(created_at) as label")
+                ->whereBetween(DB::raw('date(created_at)'), [$start_date, $end_date])
+                ->where(function ($q) use ($whereRaw) {
+                    if (!is_null($whereRaw)) $q->whereRaw($whereRaw);
+                })
+                ->first();
+        }
 
         switch($period) {
             case self::TODAY: 
