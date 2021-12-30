@@ -33,9 +33,10 @@ class LaravelMetrics
         $week = Carbon::now()->weekOfYear;
         
         if (!in_array($period, [self::TODAY, self::DAY, self::WEEK, self::MONTH, self::YEAR, self::QUATER_YEAR, self::HALF_YEAR])) {
-            if (!str_contains('~', $period)) return null;
+            if (!str_contains($period, '~')) return null;
             
             list($start_date, $end_date) = explode('~', $period);
+
             $start_date = Carbon::parse($start_date)->toDateString();
             $end_date = Carbon::parse($end_date)->toDateString();
 
@@ -127,7 +128,7 @@ class LaravelMetrics
         $week = Carbon::now()->weekOfYear;
 
         if (!in_array($period, [self::TODAY, self::DAY, self::WEEK, self::MONTH, self::YEAR, self::QUATER_YEAR, self::HALF_YEAR])) {
-            if (!str_contains('~', $period)) return null;
+            if (!str_contains($period, '~')) return [];
             
             list($start_date, $end_date) = explode('~', $period);
 
@@ -140,7 +141,9 @@ class LaravelMetrics
                 ->where(function ($q) use ($whereRaw) {
                     if (!is_null($whereRaw)) $q->whereRaw($whereRaw);
                 })
-                ->first();
+                ->groupBy('label')
+                ->orderBy('label')
+                ->get();
         }
 
         switch($period) {
