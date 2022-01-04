@@ -2,10 +2,15 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 1.0.4 - 2022-01-04
+
+- Updated README.md
+- Added demo project link
+
 ## 1.0.3 - 2021-12-30
 
-- Fix getTrends() returns data
-- Fix custom date range result
+- Fixed getTrends() returns data
+- Fixed custom date range result
 
 ## 1.0.2 - 2021-12-30
 
