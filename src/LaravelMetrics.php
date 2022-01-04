@@ -231,12 +231,12 @@ class LaravelMetrics
      *
      * @param  string $table
      * @param  string $column
-     * @param  string $period
+     * @param  string|array $period
      * @param  string $type
      * @param  string|null $whereRaw
      * @return int
      */
-    public static function getMetrics(string $table, string $column, string $period, string $type, ?string $whereRaw = null): int
+    public static function getMetrics(string $table, string $column, $period, string $type, ?string $whereRaw = null): int
     {
         $metricsData = self::getMetricsData($table, $column, $period, $type, $whereRaw);
 
@@ -248,12 +248,12 @@ class LaravelMetrics
      *
      * @param  string $table
      * @param  string $column
-     * @param  string $period
+     * @param  string|array $period
      * @param  string $type
      * @param  string|null $whereRaw
      * @return array
      */
-    public static function getTrends(string $table, string $column, string $period, string $type, ?string $whereRaw = null): array
+    public static function getTrends(string $table, string $column, $period, string $type, ?string $whereRaw = null): array
     {
         $trendsData = self::getTrendsData($table, $column, $period, $type, $whereRaw);
         $result = [];
