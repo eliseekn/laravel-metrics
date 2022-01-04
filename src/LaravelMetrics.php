@@ -26,19 +26,14 @@ class LaravelMetrics
     public const MAX = 'MAX';
     public const MIN = 'MIN';
 
-    private static function getMetricsData(string $table, string $column, string $period, string $type, ?string $whereRaw = null)
+    private static function getMetricsData(string $table, string $column, $period, string $type, ?string $whereRaw = null)
     {
         $year = Carbon::now()->year;
         $month = Carbon::now()->month;
         $week = Carbon::now()->weekOfYear;
-        
-        if (!in_array($period, [self::TODAY, self::DAY, self::WEEK, self::MONTH, self::YEAR, self::QUATER_YEAR, self::HALF_YEAR])) {
-            if (!str_contains($period, '~')) return null;
-            
-            list($start_date, $end_date) = explode('~', $period);
 
-            $start_date = Carbon::parse($start_date)->toDateString();
-            $end_date = Carbon::parse($end_date)->toDateString();
+        if (is_array($period)) {
+            list($start_date, $end_date) = array_values($period);
 
             return DB::table($table)
                 ->selectRaw("$type($column) as data")
@@ -49,6 +44,8 @@ class LaravelMetrics
                 ->first();
         }
 
+        if (!is_string($period)) return null;
+        
         switch($period) {
             case self::TODAY: 
                 return DB::table($table)
@@ -121,19 +118,14 @@ class LaravelMetrics
         }
     }
 
-    private static function getTrendsData(string $table, string $column, string $period, string $type, ?string $whereRaw = null)
+    private static function getTrendsData(string $table, string $column, $period, string $type, ?string $whereRaw = null)
     {
         $year = Carbon::now()->year;
         $month = Carbon::now()->month;
         $week = Carbon::now()->weekOfYear;
 
-        if (!in_array($period, [self::TODAY, self::DAY, self::WEEK, self::MONTH, self::YEAR, self::QUATER_YEAR, self::HALF_YEAR])) {
-            if (!str_contains($period, '~')) return [];
-            
-            list($start_date, $end_date) = explode('~', $period);
-
-            $start_date = Carbon::parse($start_date)->toDateString();
-            $end_date = Carbon::parse($end_date)->toDateString();
+        if (is_array($period)) {
+            list($start_date, $end_date) = array_values($period);
 
             return DB::table($table)
                 ->selectRaw("$type($column) as data, date(created_at) as label")
@@ -145,6 +137,8 @@ class LaravelMetrics
                 ->orderBy('label')
                 ->get();
         }
+
+        if (!is_string($period)) return [];
 
         switch($period) {
             case self::TODAY: 
@@ -250,7 +244,7 @@ class LaravelMetrics
     }
     
     /**
-     * Generate trends data to use in charts
+     * Generate trends data for charts
      *
      * @param  string $table
      * @param  string $column
