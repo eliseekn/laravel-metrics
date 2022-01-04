@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 1.0.5 - 2022-01-04
+
+- Fixed parameters types
+
 ## 1.0.4 - 2022-01-04
 
 - Updated README.md
