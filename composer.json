@@ -19,11 +19,11 @@
     "minimum-stability": "dev",
     "require": {
         "php": "^8.0",
-        "illuminate/support": "^8.x-dev",
-        "nesbot/carbon": "^2.x-dev"
+        "illuminate/support": "^6.9|^7.0|^8.0|^9.0",
+        "nesbot/carbon": "^2.62.1"
     },
     "require-dev": {
-        "phpunit/phpunit": "9.6.x-dev"
+        "phpunit/phpunit": "^9.5.8"
     },
     "autoload": {
         "psr-4": {
