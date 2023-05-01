@@ -19,9 +19,9 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "php": "^7.4|^8.0",
-        "illuminate/support": "8.x-dev",
-        "nesbot/carbon": "2.x-dev"
+        "php": "^8.0",
+        "illuminate/support": "^8.x-dev",
+        "nesbot/carbon": "^2.x-dev"
     },
     "require-dev": {
         "phpunit/phpunit": "9.6.x-dev"

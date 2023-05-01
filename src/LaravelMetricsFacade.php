@@ -4,9 +4,6 @@ namespace Eliseekn\LaravelMetrics;
 
 use Illuminate\Support\Facades\Facade;
 
-/**
- * @see \Eliseekn\LaravelMetrics\Skeleton\SkeletonClass
- */
 class LaravelMetricsFacade extends Facade
 {
     /**
@@ -14,7 +11,7 @@ class LaravelMetricsFacade extends Facade
      *
      * @return string
      */
-    protected static function getFacadeAccessor()
+    protected static function getFacadeAccessor(): string
     {
         return 'laravel-metrics';
     }
