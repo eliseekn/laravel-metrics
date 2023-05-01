@@ -2,8 +2,7 @@
     "name": "eliseekn/laravel-metrics",
     "description": "Generate metrics and trends data from your database",
     "keywords": [
-        "eliseekn",
-        "laravel-metrics",
+        "metrics",
         "trends"
     ],
     "homepage": "https://github.com/eliseekn/laravel-metrics",
