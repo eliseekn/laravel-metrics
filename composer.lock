@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "364fa297aa3cd001ce9c1093effd612a",
+    "content-hash": "0af941a77c827225c7fde276206ec974",
     "packages": [
         {
             "name": "doctrine/inflector",
@@ -2683,7 +2683,9 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "nesbot/carbon": 20
+        "illuminate/support": 20,
+        "nesbot/carbon": 20,
+        "phpunit/phpunit": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
