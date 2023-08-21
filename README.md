@@ -6,15 +6,11 @@
 Generate metrics and trends data from your database.
 
 ## Installation
-
-You can install the package via composer:
-
 ```bash
 composer require eliseekn/laravel-metrics
 ```
 
 ## Usage
-
 ```php
 <?php
 

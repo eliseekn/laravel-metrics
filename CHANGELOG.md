@@ -2,28 +2,35 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.0.0
+
+- Upgrade to PHP version to 8.1
+- Add SQLite support
+- Update whole code structure
+- Remove static method
+
 ## 1.0.5 - 2022-01-04
 
-- Fixed parameters types
+- Fix parameters types
 
 ## 1.0.4 - 2022-01-04
 
-- Updated README.md
-- Added demo project link
+- Update README.md
+- Add demo project link
 
 ## 1.0.3 - 2021-12-30
 
-- Fixed getTrends() returns data
-- Fixed custom date range result
+- Fix getTrends() returns data
+- Fix custom date range result
 
 ## 1.0.2 - 2021-12-30
 
-- Added custom date range
+- Add custom date range
 
 ## 1.0.1 - 2021-09-25
 
-- Added Carbon package
-- Removed unnecessary files and folder
+- Add Carbon package
+- Remove unnecessary files and folder
 
 ## 1.0.0 - 2021-09-25
 
