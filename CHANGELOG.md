@@ -8,6 +8,7 @@ All notable changes to `laravel-metrics` will be documented in this file
 - Add SQLite support
 - Update whole code structure
 - Remove static method
+- Add eloquent query builder
 
 ## 1.0.5 - 2022-01-04
 

@@ -18,17 +18,29 @@ namespace App\Http\DashboardController;
 
 use Eliseekn\LaravelMetrics\LaravelMetrics;
 use Illuminate\Http\Request;
+use App\Models\Order;
+use App\Models\Product;
 
 Class DashboardController extends Controller
 {
     public function index(Request $request)
     {
         //generate trends data for your chart component
-        $expensesTrends = LaravelMetrics::getTrends('expenses', 'amount', LaravelMetrics::YEAR, LaravelMetrics::SUM);
-        $userTrends = LaravelMetrics::getTrends('users', 'id', LaravelMetrics::QUATER_YEAR, LaravelMetrics::COUNT);
+        $ordersTrends = LaravelMetrics::query(Order::query())
+            ->sum('amount')
+            ->byMonth(12)
+            ->trends();
+        
+        $productsTrends = LaravelMetrics::query(Product::query())
+            ->count()
+            ->byYear(3)
+            ->trends();
 
         //generate metrics data
-        $totalExpenses = LaravelMetrics::getMetrics('expenses', 'amount', LaravelMetrics::QUATER_YEAR, LaravelMetrics::SUM);
+        $totalOrders = LaravelMetrics::query(Order::query())
+            ->sum('amount')
+            ->byYear(1)
+            ->metrics();
 
         //generate metrics data for a custum perod
         $totalUsers = LaravelMetrics::getMetrics('users', 'id', ['2021-01-01', '2021-12-31'], LaravelMetrics::MAX);
@@ -38,7 +50,7 @@ Class DashboardController extends Controller
 }
 ```
 
-### Differents types of periods
+### Different types of periods
 ```php
 LaravelMetrics::TODAY
 LaravelMetrics::DAY
@@ -49,7 +61,7 @@ LaravelMetrics::QUATER_YEAR
 LaravelMetrics::HALF_YEAR
 ```
 
-### Differents types of data
+### Different types of data
 ```php
 LaravelMetrics::COUNT
 LaravelMetrics::AVERAGE
