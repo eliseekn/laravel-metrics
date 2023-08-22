@@ -54,7 +54,7 @@ class LaravelMetrics
     ];
 
     protected string $table;
-    protected string $column = '*';
+    protected string $column = 'id';
     protected string|array $period = self::MONTH;
     protected string $type = self::COUNT;
     protected string $dateColumn;
@@ -105,7 +105,7 @@ class LaravelMetrics
         return $this;
     }
 
-    public function count(string $column = '*'): self
+    public function count(string $column = 'id'): self
     {
         $this->type = self::COUNT;
         $this->column = $this->table . '.' . $column;

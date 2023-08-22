@@ -3,74 +3,97 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/eliseekn/laravel-metrics.svg?style=flat-square)](https://packagist.org/packages/eliseekn/laravel-metrics)
 [![Total Downloads](https://img.shields.io/packagist/dt/eliseekn/laravel-metrics.svg?style=flat-square)](https://packagist.org/packages/eliseekn/laravel-metrics)
 
-Generate metrics and trends data from your database.
+Generate easily metrics and trends data of your models for your dashboard.
 
 ## Installation
 ```bash
 composer require eliseekn/laravel-metrics
 ```
 
+## Features
+- MySQL and SQLite support
+- Verbose query builder
+- 
+
 ## Usage
+Import the `Eliseekn\LaravelMetrics\LaravelMetrics` class in your controller and use it as follows :
+
 ```php
-<?php
+// generate trends of the sum of the orders amount for the last 12 months of the current year
+LaravelMetrics::query(Order::query())
+    ->sum('amount')
+    ->byMonth(12)
+    ->trends();
 
-namespace App\Http\DashboardController;
+// generate trends of count of the products for the last 3 years
+LaravelMetrics::query(Product::query())
+    ->count()
+    ->byYear(3)
+    ->trends();
+            
+// generate total sum of the orders amount for every year
+LaravelMetrics::query(Order::query())
+    ->sum('amount')
+    ->byYear()
+    ->metrics(); 
 
-use Eliseekn\LaravelMetrics\LaravelMetrics;
-use Illuminate\Http\Request;
-use App\Models\Order;
-use App\Models\Product;
-
-Class DashboardController extends Controller
-{
-    public function index(Request $request)
-    {
-        //generate trends data for your chart component
-        $ordersTrends = LaravelMetrics::query(Order::query())
-            ->sum('amount')
-            ->byMonth(12)
-            ->trends();
-        
-        $productsTrends = LaravelMetrics::query(Product::query())
-            ->count()
-            ->byYear(3)
-            ->trends();
-
-        //generate metrics data
-        $totalOrders = LaravelMetrics::query(Order::query())
-            ->sum('amount')
-            ->byYear(1)
-            ->metrics();
-
-        //generate metrics data for a custum perod
-        $totalUsers = LaravelMetrics::getMetrics('users', 'id', ['2021-01-01', '2021-12-31'], LaravelMetrics::MAX);
-
-        return view('dashboard', compact('expensesTrends', 'userTrends', 'totalExpenses', 'totalUsers'));
-    }
-}
+// generate total count of the product for the current day of the current month
+LaravelMetrics::query(Product::query())
+    ->count()
+    ->byDay(1)
+    ->metrics();
+    
+// generate trends of count of posts for the last 7 days of the current month
+// by using a custom query and a specific date column (published_at)
+LaravelMetrics::query(
+    Post::query()->where('user_id', auth()->id())
+)
+    ->count()
+    ->byDay(7)
+    ->dateColumn('published_at')
+    ->trends();
+    
+// generate trends of count of posts for a range of dates
+// by using a custom query and a specific date column (published_at)
+LaravelMetrics::query(
+    Post::query()->where('user_id', auth()->id())
+)
+    ->count()
+    ->between('2020-05-01', '2022-08-21')
+    ->dateColumn('published_at')
+    ->trends();
 ```
 
-### Different types of periods
+### Types of periods
 ```php
-LaravelMetrics::TODAY
-LaravelMetrics::DAY
-LaravelMetrics::WEEK
-LaravelMetrics::MONTH
-LaravelMetrics::YEAR
-LaravelMetrics::QUATER_YEAR
-LaravelMetrics::HALF_YEAR
+->byDay($count = 0)
+->byMonth($count = 0)
+->byYear($count = 0)
+->between($startDate, $endDate)
 ```
 
-### Different types of data
 ```php
-LaravelMetrics::COUNT
-LaravelMetrics::AVERAGE
-LaravelMetrics::SUM
-LaravelMetrics::MAX
-LaravelMetrics::MIN
+$count = 0 => for every day, month or year 
+$count = 1 => for the current day, month or year
+$count > 1 => for an interval of day, month or year from the $count value to now
 ```
 
-### Changelog
+### Types of aggregates
+```php
+->count('column')
+->average('column')
+->sum('column')
+->max('column')
+->min('column')
+```
+
+### Types of data
+```php
+->trends()  // retrieves trends values for charts
+->metrics() // retrieves total values
+```
+
+## Changelog
 
 Please see [CHANGELOG](CHANGELOG.md) for more information what has changed recently.
 
@@ -80,12 +103,11 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ### Security
 
-If you discover any security related issues, please email eliseekn@gmail.com instead of using the issue tracker.
+If you discover any security related issues, please email `eliseekn@gmail.com` instead of using the issue tracker.
 
 ## Credits
 
 -   [N'Guessan Kouadio Elisée](https://github.com/eliseekn)
--   [All Contributors](../../contributors)
 
 ## License
 
