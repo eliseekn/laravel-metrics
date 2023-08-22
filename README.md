@@ -13,7 +13,8 @@ composer require eliseekn/laravel-metrics
 ## Features
 - MySQL and SQLite support
 - Verbose query builder
-- 
+- Custom date column definition
+- No ambiguous column
 
 ## Usage
 Import the `Eliseekn\LaravelMetrics\LaravelMetrics` class in your controller and use it as follows :
