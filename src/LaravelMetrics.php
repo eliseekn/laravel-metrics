@@ -6,6 +6,7 @@ namespace Eliseekn\LaravelMetrics;
 use Carbon\Carbon;
 use DateTime;
 use Eliseekn\LaravelMetrics\Exceptions\InvalidDateFormatException;
+use Eliseekn\LaravelMetrics\Exceptions\InvalidPeriodException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
@@ -94,6 +95,19 @@ class LaravelMetrics
     public function byYear(int $count = 0): self
     {
         $this->period = self::YEAR;
+        $this->count = $count;
+        return $this;
+    }
+
+    public function by(string $period, int $count = 0): self
+    {
+        $period = strtolower($period);
+
+        if (!in_array($period, [self::DAY, self::MONTH, self::YEAR])) {
+            throw new InvalidPeriodException();
+        }
+
+        $this->period = $period;
         $this->count = $count;
         return $this;
     }

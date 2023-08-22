@@ -70,6 +70,7 @@ LaravelMetrics::query(
 ->byDay($count = 0)
 ->byMonth($count = 0)
 ->byYear($count = 0)
+->by($period, $count = 0)
 ->between($startDate, $endDate)
 ```
 
@@ -77,6 +78,7 @@ LaravelMetrics::query(
 $count = 0 => for every day, month or year 
 $count = 1 => for the current day, month or year
 $count > 1 => for an interval of day, month or year from the $count value to now
+$period = 'day', 'month' or 'year'
 ```
 
 ### Types of aggregates
