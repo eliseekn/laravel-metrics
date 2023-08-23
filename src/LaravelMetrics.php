@@ -60,7 +60,7 @@ class LaravelMetrics
     {
         $period = strtolower($period);
 
-        if (!in_array($period, [self::DAY, self::MONTH, self::YEAR])) {
+        if (!in_array($period, [self::DAY, self::WEEK, self::MONTH, self::YEAR])) {
             throw new InvalidPeriodException();
         }
 
