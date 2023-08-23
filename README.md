@@ -11,22 +11,27 @@ composer require eliseekn/laravel-metrics
 ```
 
 ## Features
-- MySQL and SQLite support
+- MySQL support
 - Verbose query builder
 - Custom date column definition
-- No ambiguous column
 
 ## Usage
 Import the `Eliseekn\LaravelMetrics\LaravelMetrics` class in your controller and use it as follows :
 
 ```php
-// generate trends of the sum of the orders amount for the last 12 months of the current year
+// generate trends of the sum of the orders amount for the current year
 LaravelMetrics::query(Order::query())
     ->sum('amount')
-    ->byMonth(12)
+    ->byMonth()
     ->trends();
 
-// generate trends of count of the products for the last 3 years
+// generate trends of the sum of the orders amount for the last 6 months of the current year including the current month
+LaravelMetrics::query(Order::query())
+    ->sum('amount')
+    ->byMonth(6)
+    ->trends();
+
+// generate trends of count of the products for the last 3 years including the current year
 LaravelMetrics::query(Product::query())
     ->count()
     ->byYear(3)
@@ -38,47 +43,52 @@ LaravelMetrics::query(Order::query())
     ->byYear()
     ->metrics(); 
 
-// generate total count of the product for the current day of the current month
+// generate total count of the product for the current day of the current week
 LaravelMetrics::query(Product::query())
     ->count()
     ->byDay(1)
     ->metrics();
     
-// generate trends of count of posts for the last 7 days of the current month
+// generate total count of the product for the current month
+LaravelMetrics::query(Product::query())
+    ->count()
+    ->byWeek()
+    ->metrics();
+    
+// generate trends of count of posts for the current week
 // by using a custom query and a specific date column (published_at)
 LaravelMetrics::query(
     Post::query()->where('user_id', auth()->id())
 )
     ->count()
-    ->byDay(7)
+    ->byDay()
     ->dateColumn('published_at')
     ->trends();
     
 // generate trends of count of posts for a range of dates
-// by using a custom query and a specific date column (published_at)
 LaravelMetrics::query(
     Post::query()->where('user_id', auth()->id())
 )
     ->count()
     ->between('2020-05-01', '2022-08-21')
-    ->dateColumn('published_at')
     ->trends();
 ```
 
 ### Types of periods
 ```php
-->byDay($count = 0)
-->byMonth($count = 0)
-->byYear($count = 0)
-->by($period, $count = 0)
+->byDay(int $count = 0)
+->byWeek(int $count = 0)
+->byMonth(int $count = 0)
+->byYear(int $count = 0)
+->by(string $period, $count = 0)
 ->between($startDate, $endDate)
 ```
 
 ```php
-$count = 0 => for every day, month or year 
-$count = 1 => for the current day, month or year
-$count > 1 => for an interval of day, month or year from the $count value to now
-$period = 'day', 'month' or 'year'
+$count = 0 => for every day, week, month or year 
+$count = 1 => for the current day, week, month or year
+$count > 1 => for an interval of day, week, month or year from the $count value to now
+$period = 'day', 'week', 'month' or 'year'
 ```
 
 ### Types of aggregates
@@ -95,6 +105,10 @@ $period = 'day', 'month' or 'year'
 ->trends()  // retrieves trends values for charts
 ->metrics() // retrieves total values
 ```
+
+### Translations
+
+Days and months names are automatically translated using `config(app.locale)` except 'Week'.
 
 ## Changelog
 
