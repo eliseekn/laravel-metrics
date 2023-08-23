@@ -14,6 +14,7 @@ composer require eliseekn/laravel-metrics
 - MySQL support
 - Verbose query builder
 - Custom date column definition
+- Days and months names translation
 
 ## Usage
 Import the `Eliseekn\LaravelMetrics\LaravelMetrics` class in your controller and use it as follows :
