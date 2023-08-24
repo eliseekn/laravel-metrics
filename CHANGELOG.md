@@ -2,6 +2,11 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.1.0
+
+- Add custom label column definition
+- Move periods and aggregates constants to enums
+
 ## 2.0.0
 
 - Upgrade to PHP version to 8.1
