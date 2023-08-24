@@ -8,9 +8,9 @@ use Exception;
 /**
  * This exception occurs when date format is invalid
  */
-class InvalidPeriodException extends Exception
+class InvalidAggregateException extends Exception
 {
     public function __construct() {
-        parent::__construct('Invalid period value. Valid period is day, week, month or year');
+        parent::__construct('Invalid aggregate value. Valid aggregate is count, sum, max, min or avg');
     }
 }

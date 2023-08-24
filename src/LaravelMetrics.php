@@ -5,6 +5,9 @@ namespace Eliseekn\LaravelMetrics;
 
 use Carbon\Carbon;
 use DateTime;
+use Eliseekn\LaravelMetrics\Enums\Aggregate;
+use Eliseekn\LaravelMetrics\Enums\Period;
+use Eliseekn\LaravelMetrics\Exceptions\InvalidAggregateException;
 use Eliseekn\LaravelMetrics\Exceptions\InvalidDateFormatException;
 use Eliseekn\LaravelMetrics\Exceptions\InvalidPeriodException;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,21 +23,12 @@ use Illuminate\Support\Facades\DB;
  */
 class LaravelMetrics
 {
-    protected const DAY = 'day';
-    protected const WEEK = 'week';
-    protected const MONTH = 'month';
-    protected const YEAR = 'year';
-    protected const COUNT = 'count';
-    protected const AVERAGE = 'avg';
-    protected const SUM = 'sum';
-    protected const MAX = 'max';
-    protected const MIN = 'min';
-
     protected string $table;
     protected string $column = 'id';
-    protected string|array $period = self::MONTH;
-    protected string $type = self::COUNT;
+    protected string|array $period;
+    protected string $aggregate;
     protected string $dateColumn;
+    protected ?string $labelColumn = null;
     protected int $count = 0;
     protected int $year;
     protected int $month;
@@ -45,6 +39,8 @@ class LaravelMetrics
     {
         $this->table = $this->builder->from;
         $this->dateColumn = $this->table . '.created_at';
+        $this->period = Period::MONTH->value;
+        $this->aggregate = Aggregate::COUNT->value;
         $this->year = Carbon::now()->year;
         $this->month = Carbon::now()->month;
         $this->day = Carbon::now()->day;
@@ -60,7 +56,7 @@ class LaravelMetrics
     {
         $period = strtolower($period);
 
-        if (!in_array($period, [self::DAY, self::WEEK, self::MONTH, self::YEAR])) {
+        if (!in_array($period, Period::values())) {
             throw new InvalidPeriodException();
         }
 
@@ -71,22 +67,22 @@ class LaravelMetrics
 
     public function byDay(int $count = 0): self
     {
-        return $this->by(self::DAY, $count);
+        return $this->by(Period::DAY->value, $count);
     }
 
     public function byWeek(int $count = 0): self
     {
-        return $this->by(self::WEEK, $count);
+        return $this->by(Period::WEEK->value, $count);
     }
 
     public function byMonth(int $count = 0): self
     {
-        return $this->by(self::MONTH, $count);
+        return $this->by(Period::MONTH->value, $count);
     }
 
     public function byYear(int $count = 0): self
     {
-        return $this->by(self::YEAR, $count);
+        return $this->by(Period::YEAR->value, $count);
     }
 
     public function between(string $start, string $end): self
@@ -96,39 +92,42 @@ class LaravelMetrics
         return $this;
     }
 
-    public function count(string $column = 'id'): self
+    public function aggregate(string $aggregate, string $column): self
     {
-        $this->type = self::COUNT;
+        $aggregate = strtolower($aggregate);
+
+        if (!in_array($aggregate, Aggregate::values())) {
+            throw new InvalidAggregateException();
+        }
+
+        $this->aggregate = $aggregate;
         $this->column = $this->table . '.' . $column;
         return $this;
+    }
+
+    public function count(string $column = 'id'): self
+    {
+        return $this->aggregate(Aggregate::COUNT->value, $column);
     }
 
     public function average(string $column): self
     {
-        $this->type = self::AVERAGE;
-        $this->column = $this->table . '.' . $column;
-        return $this;
+        return $this->aggregate(Aggregate::AVERAGE->value, $column);
     }
 
     public function sum(string $column): self
     {
-        $this->type = self::SUM;
-        $this->column = $this->table . '.' . $column;
-        return $this;
+        return $this->aggregate(Aggregate::SUM->value, $column);
     }
 
     public function max(string $column): self
     {
-        $this->type = self::MAX;
-        $this->column = $this->table . '.' . $column;
-        return $this;
+        return $this->aggregate(Aggregate::MAX->value, $column);
     }
 
     public function min(string $column): self
     {
-        $this->type = self::MIN;
-        $this->column = $this->table . '.' . $column;
-        return $this;
+        return $this->aggregate(Aggregate::MIN->value, $column);
     }
 
     public function dateColumn(string $column): self
@@ -137,23 +136,29 @@ class LaravelMetrics
         return $this;
     }
 
+    public function labelColumn(string $column): self
+    {
+        $this->labelColumn = $this->table . '.' . $column;
+        return $this;
+    }
+
     protected function metricsData(): mixed
     {
         if (is_array($this->period)) {
             return $this->builder
                 ->toBase()
-                ->selectRaw("$this->type($this->column) as data")
+                ->selectRaw($this->asData("$this->aggregate($this->column)"))
                 ->whereBetween(DB::raw("date($this->dateColumn)"), [$this->period[0], $this->period[1]])
                 ->first();
         }
 
         return match ($this->period) {
-            self::DAY => $this->builder
+            Period::DAY->value => $this->builder
                 ->toBase()
-                ->selectRaw("$this->type($this->column) as data")
+                ->selectRaw($this->asData("$this->aggregate($this->column)"))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
-                ->where(DB::raw($this->formatPeriod(self::WEEK)), $this->week)
+                ->where(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->week)
                 ->when($this->count === 1, function (QueryBuilder $query) {
                     return $query->where(DB::raw("day($this->dateColumn)"), $this->day);
                 })
@@ -164,43 +169,43 @@ class LaravelMetrics
                 })
                 ->first(),
 
-            self::WEEK => $this->builder
+            Period::WEEK->value => $this->builder
                 ->toBase()
-                ->selectRaw("$this->type($this->column) as data")
+                ->selectRaw($this->asData("$this->aggregate($this->column)"))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (QueryBuilder $query) {
-                    return $query->where(DB::raw($this->formatPeriod(self::WEEK)), $this->week);
+                    return $query->where(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->week);
                 })
                 ->when($this->count > 1, function (QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw($this->formatPeriod(self::WEEK)), [
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::WEEK->value)), [
                         Carbon::now()->subWeeks($this->count)->week, $this->week
                     ]);
                 })
                 ->first(),
 
-            self::MONTH => $this->builder
+            Period::MONTH->value => $this->builder
                 ->toBase()
-                ->selectRaw("$this->type($this->column) as data")
+                ->selectRaw($this->asData("$this->aggregate($this->column)"))
                 ->whereYear($this->dateColumn, $this->year)
                 ->when($this->count === 1, function (QueryBuilder $query) {
-                    return $query->where(DB::raw($this->formatPeriod(self::MONTH)), $this->month);
+                    return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
                 })
                 ->when($this->count > 1, function (QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw($this->formatPeriod(self::MONTH)), [
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::MONTH->value)), [
                         $this->parseMonth(), $this->month
                     ]);
                 })
                 ->first(),
 
-            self::YEAR => $this->builder
+            Period::YEAR->value => $this->builder
                 ->toBase()
-                ->selectRaw("$this->type($this->column) as data")
+                ->selectRaw($this->asData("$this->aggregate($this->column)"))
                 ->when($this->count === 1, function (QueryBuilder $query) {
-                    return $query->where(DB::raw($this->formatPeriod(self::YEAR)), $this->year);
+                    return $query->where(DB::raw($this->formatPeriod(Period::YEAR->value)), $this->year);
                 })
                 ->when($this->count > 1, function (QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw($this->formatPeriod(self::YEAR)), [
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::YEAR->value)), [
                         Carbon::now()->subYears($this->count)->year, $this->year
                     ]);
                 })
@@ -215,7 +220,7 @@ class LaravelMetrics
         if (is_array($this->period)) {
             return $this->builder
                 ->toBase()
-                ->selectRaw("$this->type($this->column) as data, date($this->dateColumn) as label")
+                ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel("date($this->dateColumn)", false))
                 ->whereBetween(DB::raw("date($this->dateColumn)"), [$this->period[0], $this->period[1]])
                 ->groupBy('label')
                 ->orderBy('label')
@@ -223,12 +228,12 @@ class LaravelMetrics
         }
 
         return match ($this->period) {
-            self::DAY => $this->builder
+            Period::DAY->value => $this->builder
                 ->toBase()
-                ->selectRaw("$this->type($this->column) as data, " . $this->formatPeriod(self::DAY) . " as label")
+                ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel(Period::DAY->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
-                ->where(DB::raw($this->formatPeriod(self::WEEK)), $this->week)
+                ->where(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->week)
                 ->when($this->count === 1, function (QueryBuilder $query) {
                     return $query->where(DB::raw("day($this->dateColumn)"), $this->day);
                 })
@@ -241,16 +246,16 @@ class LaravelMetrics
                 ->orderBy('label')
                 ->get(),
 
-            self::WEEK => $this->builder
+            Period::WEEK->value => $this->builder
                 ->toBase()
-                ->selectRaw("$this->type($this->column) as data, " . $this->formatPeriod(self::WEEK) . " as label")
+                ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel(Period::WEEK->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (QueryBuilder $query) {
-                    return $query->where(DB::raw($this->formatPeriod(self::WEEK)), $this->week);
+                    return $query->where(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->week);
                 })
                 ->when($this->count > 1, function (QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw($this->formatPeriod(self::WEEK)), [
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::WEEK->value)), [
                         Carbon::now()->subWeeks($this->count)->week, $this->week
                     ]);
                 })
@@ -258,15 +263,15 @@ class LaravelMetrics
                 ->orderBy('label')
                 ->get(),
 
-            self::MONTH => $this->builder
+            Period::MONTH->value => $this->builder
                 ->toBase()
-                ->selectRaw("$this->type($this->column) as data, " . $this->formatPeriod(self::MONTH) . " as label")
+                ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel(Period::MONTH->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->when($this->count === 1, function (QueryBuilder $query) {
-                    return $query->where(DB::raw($this->formatPeriod(self::MONTH)), $this->month);
+                    return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
                 })
                 ->when($this->count > 1, function (QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw($this->formatPeriod(self::MONTH)), [
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::MONTH->value)), [
                         $this->parseMonth(), $this->month
                     ]);
                 })
@@ -274,14 +279,14 @@ class LaravelMetrics
                 ->orderBy('label')
                 ->get(),
 
-            self::YEAR => $this->builder
+            Period::YEAR->value => $this->builder
                 ->toBase()
-                ->selectRaw("$this->type($this->column) as data, " . $this->formatPeriod(self::YEAR) . " as label")
+                ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel(Period::YEAR->value))
                 ->when($this->count === 1, function (QueryBuilder $query) {
-                    return $query->where(DB::raw($this->formatPeriod(self::YEAR)), $this->year);
+                    return $query->where(DB::raw($this->formatPeriod(Period::YEAR->value)), $this->year);
                 })
                 ->when($this->count > 1, function (QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw($this->formatPeriod(self::YEAR)), [
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::YEAR->value)), [
                         Carbon::now()->subYears($this->count)->year, $this->year
                     ]);
                 })
@@ -312,24 +317,40 @@ class LaravelMetrics
     protected function formatPeriod(string $period): string
     {
         return match ($period) {
-            self::DAY => "weekday($this->dateColumn)",
-            self::WEEK => "week($this->dateColumn)",
-            self::MONTH => "month($this->dateColumn)",
-            self::YEAR => "year($this->dateColumn)",
+            Period::DAY->value => "weekday($this->dateColumn)",
+            Period::WEEK->value => "week($this->dateColumn)",
+            Period::MONTH->value => "month($this->dateColumn)",
+            Period::YEAR->value => "year($this->dateColumn)",
             default => '',
         };
+    }
+
+    protected function asData(string $data): string
+    {
+        return $data . " as data";
+    }
+
+    protected function asLabel(?string $label = null, bool $format = true): string
+    {
+        if (is_null($this->labelColumn)) {
+            $label = !$format ? $label : $this->formatPeriod($label);
+        } else {
+            $label = $this->labelColumn;
+        }
+
+        return $label . " as label";
     }
 
     protected function formatDate(array $data): array
     {
         return array_map(function ($data)  {
-            if ($this->period === self::MONTH) {
+            if ($this->period === Period::MONTH->value) {
                 $data->label = Carbon::parse($this->year . '-' . $data->label)->locale(self::locale())->monthName;
-            } elseif ($this->period === self::DAY) {
+            } elseif ($this->period === Period::DAY->value) {
                 $data->label = Carbon::parse($this->year . '-' . $this->month . '-' . $data->label)->locale(self::locale())->dayName;
-            } elseif ($this->period === self::WEEK) {
+            } elseif ($this->period === Period::WEEK->value) {
                 $data->label = 'Week ' . $data->label;
-            } elseif ($this->period === self::YEAR) {
+            } elseif ($this->period === Period::YEAR->value) {
                 $data->label = intval($data->label);
             } else {
                 $data->label = Carbon::parse($data->label)->locale(self::locale())->toFormattedDateString();
@@ -353,7 +374,10 @@ class LaravelMetrics
      */
     public function trends(): array
     {
-        $trendsData = $this->formatDate($this->trendsData()->toArray());
+        $trendsData = is_null($this->labelColumn)
+            ? $this->formatDate($this->trendsData()->toArray())
+            : $this->trendsData()->toArray();
+
         $result = [];
 
         foreach ($trendsData as $data) {

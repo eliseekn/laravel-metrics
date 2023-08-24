@@ -13,8 +13,8 @@ composer require eliseekn/laravel-metrics
 ## Features
 - MySQL support
 - Verbose query builder
-- Custom date column definition
-- Days and months names translation
+- Custom columns definition support
+- Days and months names translation with Carbon
 
 ## Usage
 Import the `Eliseekn\LaravelMetrics\LaravelMetrics` class in your controller and use it as follows :
@@ -57,7 +57,7 @@ LaravelMetrics::query(Product::query())
     ->metrics();
     
 // generate trends of count of posts for the current week
-// by using a custom query and a specific date column (published_at)
+// by using a custom query and a custom date column
 LaravelMetrics::query(
     Post::query()->where('user_id', auth()->id())
 )
@@ -73,6 +73,14 @@ LaravelMetrics::query(
     ->count()
     ->between('2020-05-01', '2022-08-21')
     ->trends();
+
+// generate total count of the orders for the current year
+// by using a custom label column
+LaravelMetrics::query(Order::query())
+    ->count()
+    ->byMonth(12)
+    ->labelColumn('status')
+    ->trends();
 ```
 
 ### Types of periods
@@ -81,8 +89,8 @@ LaravelMetrics::query(
 ->byWeek(int $count = 0)
 ->byMonth(int $count = 0)
 ->byYear(int $count = 0)
-->by(string $period, $count = 0)
-->between($startDate, $endDate)
+->between(string $startDate, string $endDate)
+->by(string $period, int $count = 0)
 ```
 
 ```php
@@ -94,11 +102,12 @@ $period = 'day', 'week', 'month' or 'year'
 
 ### Types of aggregates
 ```php
-->count('column')
-->average('column')
-->sum('column')
-->max('column')
-->min('column')
+->count(string $column = 'id')
+->average(string $column)
+->sum(string $column)
+->max(string $column)
+->min(string $column)
+->aggregate(string $aggregate, string $column)
 ```
 
 ### Types of data
