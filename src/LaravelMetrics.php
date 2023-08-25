@@ -92,6 +92,18 @@ class LaravelMetrics
         return $this;
     }
 
+    public function forMonth(int $month): self
+    {
+        $this->month = $month;
+        return $this;
+    }
+
+    public function forYear(int $year): self
+    {
+        $this->year = $year;
+        return $this;
+    }
+
     public function aggregate(string $aggregate, string $column): self
     {
         $aggregate = strtolower($aggregate);
@@ -158,7 +170,6 @@ class LaravelMetrics
                 ->selectRaw($this->asData("$this->aggregate($this->column)"))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
-                ->where(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->week)
                 ->when($this->count === 1, function (QueryBuilder $query) {
                     return $query->where(DB::raw("day($this->dateColumn)"), $this->day);
                 })
@@ -233,7 +244,6 @@ class LaravelMetrics
                 ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel(Period::DAY->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
-                ->where(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->week)
                 ->when($this->count === 1, function (QueryBuilder $query) {
                     return $query->where(DB::raw("day($this->dateColumn)"), $this->day);
                 })

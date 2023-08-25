@@ -44,7 +44,7 @@ LaravelMetrics::query(Order::query())
     ->byYear()
     ->metrics(); 
 
-// generate total count of the product for the current day of the current week
+// generate total count of the product for the current day of the current month
 LaravelMetrics::query(Product::query())
     ->count()
     ->byDay(1)
@@ -56,7 +56,7 @@ LaravelMetrics::query(Product::query())
     ->byWeek()
     ->metrics();
     
-// generate trends of count of posts for the current week
+// generate trends of count of posts for the current month
 // by using a custom query and a custom date column
 LaravelMetrics::query(
     Post::query()->where('user_id', auth()->id())
@@ -72,6 +72,14 @@ LaravelMetrics::query(
 )
     ->count()
     ->between('2020-05-01', '2022-08-21')
+    ->trends();
+
+// generate total count of the orders for the current year
+// by using a custom label column
+LaravelMetrics::query(Order::query())
+    ->count()
+    ->byMonth(12)
+    ->labelColumn('status')
     ->trends();
 
 // generate total count of the orders for the current year
@@ -98,6 +106,26 @@ $count = 0 => for every day, week, month or year
 $count = 1 => for the current day, week, month or year
 $count > 1 => for an interval of day, week, month or year from the $count value to now
 $period = 'day', 'week', 'month' or 'year'
+```
+
+#### Notes
+Periods are typically defined for the current month and/or year. However, you also have the option to define a specific month or year using dedicated methods. For example:
+```php
+// generate total count of the orders for the year 2023
+//// by using a custom label column
+LaravelMetrics::query(Order::query())
+    ->count()
+    ->byMonth(12)
+    ->forYear(2023)
+    ->labelColumn('status')
+    ->trends();
+
+// generate total count of the product for the current day of the month february
+LaravelMetrics::query(Product::query())
+    ->count()
+    ->byDay(1)
+    ->forMonth(2)
+    ->metrics();
 ```
 
 ### Types of aggregates
