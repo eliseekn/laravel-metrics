@@ -171,7 +171,7 @@ class LaravelMetrics
         if (is_array($this->period)) {
             return $this->builder
                 ->toBase()
-                ->selectRaw($this->asData("$this->aggregate($this->column)"))
+                ->selectRaw($this->asData())
                 ->whereBetween(DB::raw("date($this->dateColumn)"), [$this->period[0], $this->period[1]])
                 ->first();
         }
@@ -179,7 +179,7 @@ class LaravelMetrics
         return match ($this->period) {
             Period::DAY->value => $this->builder
                 ->toBase()
-                ->selectRaw($this->asData("$this->aggregate($this->column)"))
+                ->selectRaw($this->asData())
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (QueryBuilder $query) {
@@ -194,7 +194,7 @@ class LaravelMetrics
 
             Period::WEEK->value => $this->builder
                 ->toBase()
-                ->selectRaw($this->asData("$this->aggregate($this->column)"))
+                ->selectRaw($this->asData())
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (QueryBuilder $query) {
@@ -209,7 +209,7 @@ class LaravelMetrics
 
             Period::MONTH->value => $this->builder
                 ->toBase()
-                ->selectRaw($this->asData("$this->aggregate($this->column)"))
+                ->selectRaw($this->asData())
                 ->whereYear($this->dateColumn, $this->year)
                 ->when($this->count === 1, function (QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
@@ -223,7 +223,7 @@ class LaravelMetrics
 
             Period::YEAR->value => $this->builder
                 ->toBase()
-                ->selectRaw($this->asData("$this->aggregate($this->column)"))
+                ->selectRaw($this->asData())
                 ->when($this->count === 1, function (QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::YEAR->value)), $this->year);
                 })
@@ -243,7 +243,7 @@ class LaravelMetrics
         if (is_array($this->period)) {
             return $this->builder
                 ->toBase()
-                ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel("date($this->dateColumn)", false))
+                ->selectRaw($this->asData() . ", " . $this->asLabel("date($this->dateColumn)", false))
                 ->whereBetween(DB::raw("date($this->dateColumn)"), [$this->period[0], $this->period[1]])
                 ->groupBy('label')
                 ->orderBy('label')
@@ -253,7 +253,7 @@ class LaravelMetrics
         return match ($this->period) {
             Period::DAY->value => $this->builder
                 ->toBase()
-                ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel(Period::DAY->value))
+                ->selectRaw($this->asData() . ", " . $this->asLabel(Period::DAY->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (QueryBuilder $query) {
@@ -270,7 +270,7 @@ class LaravelMetrics
 
             Period::WEEK->value => $this->builder
                 ->toBase()
-                ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel(Period::WEEK->value))
+                ->selectRaw($this->asData() . ", " . $this->asLabel(Period::WEEK->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (QueryBuilder $query) {
@@ -287,7 +287,7 @@ class LaravelMetrics
 
             Period::MONTH->value => $this->builder
                 ->toBase()
-                ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel(Period::MONTH->value))
+                ->selectRaw($this->asData() . ", " . $this->asLabel(Period::MONTH->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->when($this->count === 1, function (QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
@@ -303,7 +303,7 @@ class LaravelMetrics
 
             Period::YEAR->value => $this->builder
                 ->toBase()
-                ->selectRaw($this->asData("$this->aggregate($this->column)") . ", " . $this->asLabel(Period::YEAR->value))
+                ->selectRaw($this->asData() . ", " . $this->asLabel(Period::YEAR->value))
                 ->when($this->count === 1, function (QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::YEAR->value)), $this->year);
                 })
@@ -347,9 +347,9 @@ class LaravelMetrics
         };
     }
 
-    protected function asData(string $data): string
+    protected function asData(): string
     {
-        return $data . " as data";
+        return "$this->aggregate($this->column) as data";
     }
 
     protected function asLabel(?string $label = null, bool $format = true): string
