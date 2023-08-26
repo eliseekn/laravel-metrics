@@ -52,7 +52,7 @@ class LaravelMetrics
         return new self($builder);
     }
 
-    public function by(string $period, int $count = 0): self
+    protected function by(string $period, int $count = 0): self
     {
         $period = strtolower($period);
 
@@ -92,6 +92,18 @@ class LaravelMetrics
         return $this;
     }
 
+    public function forDay(int $day): self
+    {
+        $this->day = $day;
+        return $this;
+    }
+
+    public function forWeek(int $week): self
+    {
+        $this->week = $week;
+        return $this;
+    }
+
     public function forMonth(int $month): self
     {
         $this->month = $month;
@@ -104,7 +116,7 @@ class LaravelMetrics
         return $this;
     }
 
-    public function aggregate(string $aggregate, string $column): self
+    protected function aggregate(string $aggregate, string $column): self
     {
         $aggregate = strtolower($aggregate);
 

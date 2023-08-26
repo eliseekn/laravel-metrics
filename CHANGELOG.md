@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.3.0
+
+- Add forDay and forMonth methods
+
 ## 2.1.0
 
 - Add custom label column definition

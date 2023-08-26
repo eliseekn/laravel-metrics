@@ -1,4 +1,4 @@
-# LaravelMetrics
+# Metrics for Laravel
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/eliseekn/laravel-metrics.svg?style=flat-square)](https://packagist.org/packages/eliseekn/laravel-metrics)
 [![Total Downloads](https://img.shields.io/packagist/dt/eliseekn/laravel-metrics.svg?style=flat-square)](https://packagist.org/packages/eliseekn/laravel-metrics)
@@ -98,7 +98,6 @@ LaravelMetrics::query(Order::query())
 ->byMonth(int $count = 0)
 ->byYear(int $count = 0)
 ->between(string $startDate, string $endDate)
-->by(string $period, int $count = 0)
 ```
 
 ```php
@@ -126,7 +125,22 @@ LaravelMetrics::query(Product::query())
     ->byDay(1)
     ->forMonth(2)
     ->metrics();
+
+// generate total sum of the orders amount for the month march only
+LaravelMetrics::query(Product::query())
+    ->sum('amount')
+    ->byMonth(1)
+    ->forMonth(3)
+    ->metrics();
 ```
+
+```php
+->forDay(int $day)
+->forWeek(int $week)
+->forMonth(int $month)
+->forYear(int $year)
+```
+
 
 ### Types of aggregates
 ```php
@@ -135,7 +149,6 @@ LaravelMetrics::query(Product::query())
 ->sum(string $column)
 ->max(string $column)
 ->min(string $column)
-->aggregate(string $aggregate, string $column)
 ```
 
 ### Types of data
