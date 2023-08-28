@@ -157,9 +157,25 @@ LaravelMetrics::query(Product::query())
 ->metrics() // retrieves total values
 ```
 
-### Translations
+### Traits
 
-Days and months names are automatically translated using `config(app.locale)` except 'Week'.
+Add `HasMetrics` trait to your models and use it as follows :
+```php
+// generate trends of the sum of the orders amount for the current year
+Order::metrics()
+    ->sum('amount')
+    ->byMonth()
+    ->trends();
+    
+// generate total count of the product for the current month
+Product::metrics()
+    ->count()
+    ->byWeek()
+    ->metrics();
+```
+## Translations
+
+Days and months names are automatically translated using `config(app.locale)` except 'week' period.
 
 ## Changelog
 

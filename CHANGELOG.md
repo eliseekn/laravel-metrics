@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.4.0
+
+- Add HasMetrics trait for models
+
 ## 2.3.0
 
 - Add forDay and forMonth methods
