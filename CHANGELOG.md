@@ -2,6 +2,11 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.4.1
+
+- Fix undefined array key 'data' exception when trends are empty
+- Update README.md
+
 ## 2.4.0
 
 - Add HasMetrics trait for models

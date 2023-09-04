@@ -400,7 +400,10 @@ class LaravelMetrics
             ? $this->formatDate($this->trendsData()->toArray())
             : $this->trendsData()->toArray();
 
-        $result = [];
+        $result = [
+            'labels' => [],
+            'data' => []
+        ];
 
         foreach ($trendsData as $data) {
             $result['labels'][] = $data->label;

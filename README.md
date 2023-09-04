@@ -81,14 +81,6 @@ LaravelMetrics::query(Order::query())
     ->byMonth(12)
     ->labelColumn('status')
     ->trends();
-
-// generate total count of the orders for the current year
-// by using a custom label column
-LaravelMetrics::query(Order::query())
-    ->count()
-    ->byMonth(12)
-    ->labelColumn('status')
-    ->trends();
 ```
 
 ### Types of periods
@@ -108,7 +100,7 @@ $period = 'day', 'week', 'month' or 'year'
 ```
 
 #### Notes
-Periods are typically defined for the current month and/or year. However, you also have the option to define a specific month or year using dedicated methods. For example:
+Periods are typically defined for the current day, week, month or year. However, you can define a specific value using dedicated methods. For example:
 ```php
 // generate total count of the orders for the year 2023
 //// by using a custom label column
