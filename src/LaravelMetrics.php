@@ -186,10 +186,10 @@ class LaravelMetrics
                 ->selectRaw($this->asData())
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
-                ->when($this->count === 1, function (QueryBuilder $query) {
+                ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw("day($this->dateColumn)"), $this->day);
                 })
-                ->when($this->count > 1, function (QueryBuilder $query) {
+                ->when($this->count > 1, function (Builder|QueryBuilder $query) {
                     return $query->whereBetween(DB::raw("day($this->dateColumn)"), [
                         Carbon::now()->subDays($this->count)->day, $this->day
                     ]);
@@ -200,10 +200,10 @@ class LaravelMetrics
                 ->selectRaw($this->asData())
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
-                ->when($this->count === 1, function (QueryBuilder $query) {
+                ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->week);
                 })
-                ->when($this->count > 1, function (QueryBuilder $query) {
+                ->when($this->count > 1, function (Builder|QueryBuilder $query) {
                     return $query->whereBetween(DB::raw($this->formatPeriod(Period::WEEK->value)), [
                         Carbon::now()->subWeeks($this->count)->week, $this->week
                     ]);
@@ -213,10 +213,10 @@ class LaravelMetrics
             Period::MONTH->value => $this->builder
                 ->selectRaw($this->asData())
                 ->whereYear($this->dateColumn, $this->year)
-                ->when($this->count === 1, function (QueryBuilder $query) {
+                ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
                 })
-                ->when($this->count > 1, function (QueryBuilder $query) {
+                ->when($this->count > 1, function (Builder|QueryBuilder $query) {
                     return $query->whereBetween(DB::raw($this->formatPeriod(Period::MONTH->value)), [
                         $this->parseMonth(), $this->month
                     ]);
@@ -225,10 +225,10 @@ class LaravelMetrics
 
             Period::YEAR->value => $this->builder
                 ->selectRaw($this->asData())
-                ->when($this->count === 1, function (QueryBuilder $query) {
+                ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::YEAR->value)), $this->year);
                 })
-                ->when($this->count > 1, function (QueryBuilder $query) {
+                ->when($this->count > 1, function (Builder|QueryBuilder $query) {
                     return $query->whereBetween(DB::raw($this->formatPeriod(Period::YEAR->value)), [
                         Carbon::now()->subYears($this->count)->year, $this->year
                     ]);
@@ -257,10 +257,10 @@ class LaravelMetrics
                 ->selectRaw($this->asData() . ", " . $this->asLabel(Period::DAY->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
-                ->when($this->count === 1, function (QueryBuilder $query) {
+                ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw("day($this->dateColumn)"), $this->day);
                 })
-                ->when($this->count > 1, function (QueryBuilder $query) {
+                ->when($this->count > 1, function (Builder|QueryBuilder $query) {
                     return $query->whereBetween(DB::raw("day($this->dateColumn)"), [
                         Carbon::now()->subDays($this->count)->day, $this->day
                     ]);
@@ -273,10 +273,10 @@ class LaravelMetrics
                 ->selectRaw($this->asData() . ", " . $this->asLabel(Period::WEEK->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
-                ->when($this->count === 1, function (QueryBuilder $query) {
+                ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->week);
                 })
-                ->when($this->count > 1, function (QueryBuilder $query) {
+                ->when($this->count > 1, function (Builder|QueryBuilder $query) {
                     return $query->whereBetween(DB::raw($this->formatPeriod(Period::WEEK->value)), [
                         Carbon::now()->subWeeks($this->count)->week, $this->week
                     ]);
@@ -288,10 +288,10 @@ class LaravelMetrics
             Period::MONTH->value => $this->builder
                 ->selectRaw($this->asData() . ", " . $this->asLabel(Period::MONTH->value))
                 ->whereYear($this->dateColumn, $this->year)
-                ->when($this->count === 1, function (QueryBuilder $query) {
+                ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
                 })
-                ->when($this->count > 1, function (QueryBuilder $query) {
+                ->when($this->count > 1, function (Builder|QueryBuilder $query) {
                     return $query->whereBetween(DB::raw($this->formatPeriod(Period::MONTH->value)), [
                         $this->parseMonth(), $this->month
                     ]);
@@ -302,10 +302,10 @@ class LaravelMetrics
 
             Period::YEAR->value => $this->builder
                 ->selectRaw($this->asData() . ", " . $this->asLabel(Period::YEAR->value))
-                ->when($this->count === 1, function (QueryBuilder $query) {
+                ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::YEAR->value)), $this->year);
                 })
-                ->when($this->count > 1, function (QueryBuilder $query) {
+                ->when($this->count > 1, function (Builder|QueryBuilder $query) {
                     return $query->whereBetween(DB::raw($this->formatPeriod(Period::YEAR->value)), [
                         Carbon::now()->subYears($this->count)->year, $this->year
                     ]);
