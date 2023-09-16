@@ -13,69 +13,70 @@ composer require eliseekn/laravel-metrics
 ## Features
 - MySQL support
 - Verbose query builder
-- Custom columns definition support
-- Days and months names translation with Carbon
+- Custom columns and table definition
+- Days and months translation with Carbon
 
 ## Usage
+
+### With Eloquent Query
+
 Import the `Eliseekn\LaravelMetrics\LaravelMetrics` class in your controller and use it as follows :
 
 ```php
-// generate trends of the sum of the orders amount for the current year
-LaravelMetrics::query(Order::query())
-    ->sum('amount')
+// generate trends of products amount's sum for the current year
+LaravelMetrics::query(Product::query())
+    ->count()
     ->byMonth()
     ->trends();
 
-// generate trends of the sum of the orders amount for the last 6 months of the current year including the current month
+// generate trends of orders amount's sum for the last 6 months of the current year including current month
 LaravelMetrics::query(Order::query())
     ->sum('amount')
     ->byMonth(6)
     ->trends();
 
-// generate trends of count of the products for the last 3 years including the current year
-LaravelMetrics::query(Product::query())
-    ->count()
-    ->byYear(3)
-    ->trends();
-            
-// generate total sum of the orders amount for every year
+// generate total orders amount's sum
 LaravelMetrics::query(Order::query())
     ->sum('amount')
     ->byYear()
     ->metrics(); 
 
-// generate total count of the product for the current day of the current month
+// generate total product count for the current day
 LaravelMetrics::query(Product::query())
     ->count()
     ->byDay(1)
     ->metrics();
-    
-// generate total count of the product for the current month
-LaravelMetrics::query(Product::query())
-    ->count()
-    ->byWeek()
-    ->metrics();
-    
-// generate trends of count of posts for the current month
-// by using a custom query and a custom date column
+```
+
+- Using custom query
+```php
 LaravelMetrics::query(
     Post::query()->where('user_id', auth()->id())
 )
     ->count()
     ->byDay()
+    ->trends();
+```
+
+- Using custom date column
+```php
+LaravelMetrics::query(Post::query())
+    ->count()
+    ->byDay()
     ->dateColumn('published_at')
     ->trends();
-    
-// generate trends of count of posts for a range of dates
-LaravelMetrics::query(
-    Post::query()->where('user_id', auth()->id())
-)
+```
+
+- Using date range
+```php
+LaravelMetrics::query(Post::query()))
     ->count()
     ->between('2020-05-01', '2022-08-21')
     ->trends();
+```
 
-// generate total count of the orders for the current year
-// by using a custom label column
+- Using custom label column
+```php
 LaravelMetrics::query(Order::query())
     ->count()
     ->byMonth(12)
@@ -83,27 +84,51 @@ LaravelMetrics::query(Order::query())
     ->trends();
 ```
 
+- Using custom table
+```php
+LaravelMetrics::query(
+    Order::query()->join('orders', 'orders.id', 'users.order_id')
+)
+    ->count()
+    ->table('users')
+    ->labelColumn('name')
+    ->trends();
+```
+
+### With Query Builder
+```php
+LaravelMetrics::query(
+    DB::table('orders')
+)
+    ->sum('amount')
+    ->byMonth()
+    ->trends();
+```
+
+### With traits 
+
+Add `HasMetrics` trait to your models and use it as follows :
+
+```php
+Order::metrics()
+    ->sum('amount')
+    ->byMonth()
+    ->trends();
+```
+
 ### Types of periods
 ```php
-->byDay(int $count = 0)
-->byWeek(int $count = 0)
-->byMonth(int $count = 0)
-->byYear(int $count = 0)
-->between(string $startDate, string $endDate)
+byDay(int $count = 0)
+byWeek(int $count = 0)
+byMonth(int $count = 0)
+byYear(int $count = 0)
+between(string $startDate, string $endDate)
 ```
 
-```php
-$count = 0 => for every day, week, month or year 
-$count = 1 => for the current day, week, month or year
-$count > 1 => for an interval of day, week, month or year from the $count value to now
-$period = 'day', 'week', 'month' or 'year'
-```
+**Note :** Periods are typically defined for the current day, week, month or year. However, you can define a specific value using dedicated methods. For example:
 
-#### Notes
-Periods are typically defined for the current day, week, month or year. However, you can define a specific value using dedicated methods. For example:
 ```php
-// generate total count of the orders for the year 2023
-//// by using a custom label column
+// generate trends of orders count for the year 2023
 LaravelMetrics::query(Order::query())
     ->count()
     ->byMonth(12)
@@ -111,14 +136,7 @@ LaravelMetrics::query(Order::query())
     ->labelColumn('status')
     ->trends();
 
-// generate total count of the product for the current day of the month february
-LaravelMetrics::query(Product::query())
-    ->count()
-    ->byDay(1)
-    ->forMonth(2)
-    ->metrics();
-
-// generate total sum of the orders amount for the month march only
+// generate total orders amount's sum for the third month only
 LaravelMetrics::query(Product::query())
     ->sum('amount')
     ->byMonth(1)
@@ -127,44 +145,27 @@ LaravelMetrics::query(Product::query())
 ```
 
 ```php
-->forDay(int $day)
-->forWeek(int $week)
-->forMonth(int $month)
-->forYear(int $year)
+forDay(int $day)
+forWeek(int $week)
+forMonth(int $month)
+forYear(int $year)
 ```
-
 
 ### Types of aggregates
 ```php
-->count(string $column = 'id')
-->average(string $column)
-->sum(string $column)
-->max(string $column)
-->min(string $column)
+count(string $column = 'id')
+average(string $column)
+sum(string $column)
+max(string $column)
+min(string $column)
 ```
 
 ### Types of data
 ```php
-->trends()  // retrieves trends values for charts
-->metrics() // retrieves total values
+trends() // retrieves trends values for charts
+metrics() // retrieves total value
 ```
 
-### Traits
-
-Add `HasMetrics` trait to your models and use it as follows :
-```php
-// generate trends of the sum of the orders amount for the current year
-Order::metrics()
-    ->sum('amount')
-    ->byMonth()
-    ->trends();
-    
-// generate total count of the product for the current month
-Product::metrics()
-    ->count()
-    ->byWeek()
-    ->metrics();
-```
 ## Translations
 
 Days and months names are automatically translated using `config(app.locale)` except 'week' period.
@@ -177,7 +178,7 @@ Please see [CHANGELOG](CHANGELOG.md) for more information what has changed recen
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
-### Security
+## Security
 
 If you discover any security related issues, please email `eliseekn@gmail.com` instead of using the issue tracker.
 
