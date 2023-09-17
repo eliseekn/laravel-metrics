@@ -8,13 +8,13 @@ use DateTime;
 use Eliseekn\LaravelMetrics\Enums\Aggregate;
 use Eliseekn\LaravelMetrics\Enums\Period;
 use Eliseekn\LaravelMetrics\Exceptions\InvalidAggregateException;
-use Eliseekn\LaravelMetrics\Exceptions\InvalidDateFormatException;
 use Eliseekn\LaravelMetrics\Exceptions\InvalidPeriodException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Eliseekn\LaravelMetrics\Exceptions\InvalidDateFormatException;
+use Illuminate\Support\Facades\Config;
 
 /**
  * LaravelMetrics
@@ -190,9 +190,7 @@ class LaravelMetrics
                     return $query->where(DB::raw("day($this->dateColumn)"), $this->day);
                 })
                 ->when($this->count > 1, function (Builder|QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw("day($this->dateColumn)"), [
-                        Carbon::now()->subDays($this->count)->day, $this->day
-                    ]);
+                    return $query->whereBetween(DB::raw("day($this->dateColumn)"), $this->getDayPeriod());
                 })
                 ->first(),
 
@@ -204,9 +202,7 @@ class LaravelMetrics
                     return $query->where(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->week);
                 })
                 ->when($this->count > 1, function (Builder|QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::WEEK->value)), [
-                        Carbon::now()->subWeeks($this->count)->week, $this->week
-                    ]);
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->getWeekPeriod());
                 })
                 ->first(),
 
@@ -217,9 +213,7 @@ class LaravelMetrics
                     return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
                 })
                 ->when($this->count > 1, function (Builder|QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::MONTH->value)), [
-                        $this->parseMonth(), $this->month
-                    ]);
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->getMonthPeriod());
                 })
                 ->first(),
 
@@ -261,9 +255,7 @@ class LaravelMetrics
                     return $query->where(DB::raw("day($this->dateColumn)"), $this->day);
                 })
                 ->when($this->count > 1, function (Builder|QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw("day($this->dateColumn)"), [
-                        Carbon::now()->subDays($this->count)->day, $this->day
-                    ]);
+                    return $query->whereBetween(DB::raw("day($this->dateColumn)"), $this->getDayPeriod());
                 })
                 ->groupBy('label')
                 ->orderBy('label')
@@ -277,9 +269,7 @@ class LaravelMetrics
                     return $query->where(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->week);
                 })
                 ->when($this->count > 1, function (Builder|QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::WEEK->value)), [
-                        Carbon::now()->subWeeks($this->count)->week, $this->week
-                    ]);
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::WEEK->value)), $this->getWeekPeriod());
                 })
                 ->groupBy('label')
                 ->orderBy('label')
@@ -292,9 +282,7 @@ class LaravelMetrics
                     return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
                 })
                 ->when($this->count > 1, function (Builder|QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::MONTH->value)), [
-                        $this->parseMonth(), $this->month
-                    ]);
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->getMonthPeriod());
                 })
                 ->groupBy('label')
                 ->orderBy('label')
@@ -322,33 +310,6 @@ class LaravelMetrics
         };
     }
 
-    protected function parseMonth(): int
-    {
-        $diff = $this->month - Carbon::now()->startOfYear()->month;
-
-        if ($diff < $this->count) {
-            return Carbon::now()->startOfYear()->month;
-        }
-
-        return Carbon::now()->subMonths($this->count)->month;
-    }
-
-    protected function locale(): string
-    {
-        return Config::get('app.locale');
-    }
-
-    protected function formatPeriod(string $period): string
-    {
-        return match ($period) {
-            Period::DAY->value => "weekday($this->dateColumn)",
-            Period::WEEK->value => "week($this->dateColumn)",
-            Period::MONTH->value => "month($this->dateColumn)",
-            Period::YEAR->value => "year($this->dateColumn)",
-            default => '',
-        };
-    }
-
     protected function asData(): string
     {
         return "$this->aggregate($this->column) as data";
@@ -363,25 +324,6 @@ class LaravelMetrics
         }
 
         return $label . " as label";
-    }
-
-    protected function formatDate(Collection $data): Collection
-    {
-        return $data->map(function ($datum) {
-            if ($this->period === Period::MONTH->value) {
-                $datum->label = Carbon::parse($this->year . '-' . $datum->label)->locale(self::locale())->monthName;
-            } elseif ($this->period === Period::DAY->value) {
-                $datum->label = Carbon::parse($this->year . '-' . $this->month . '-' . $datum->label)->locale(self::locale())->dayName;
-            } elseif ($this->period === Period::WEEK->value) {
-                $datum->label = 'Week ' . $datum->label;
-            } elseif ($this->period === Period::YEAR->value) {
-                $datum->label = intval($datum->label);
-            } else {
-                $datum->label = Carbon::parse($datum->label)->locale(self::locale())->toFormattedDateString();
-            }
-
-            return $datum;
-        });
     }
 
     /**
@@ -413,6 +355,82 @@ class LaravelMetrics
         }
 
         return $result;
+    }
+
+    protected function carbon(): Carbon
+    {
+        return Carbon::parse($this->year . '-' . $this->month . '-' . $this->day);
+    }
+
+    protected function getDayPeriod(): array
+    {
+        $day = $this->month !== Carbon::now()->month ? $this->carbon()->endOfMonth()->day : $this->day;
+        $diff = $day - $this->carbon()->startOfMonth()->day;
+
+        if ($diff < $this->count) {
+            return [$this->carbon()->startOfMonth()->day, $day];
+        }
+
+        return [$this->carbon()->subDays($this->count)->day, $day];
+    }
+
+    protected function getWeekPeriod(): array
+    {
+        $week = $this->month !== Carbon::now()->month ? $this->carbon()->endOfMonth()->week : $this->week;
+        $diff = $week - $this->carbon()->startOfMonth()->week;
+
+        if ($diff < $this->count) {
+            return [$this->carbon()->startOfMonth()->week, $week];
+        }
+
+        return [$this->carbon()->subWeeks($this->count)->week, $week];
+    }
+
+    protected function getMonthPeriod(): array
+    {
+        $month = $this->year !== Carbon::now()->year ? $this->carbon()->endOfYear()->month : $this->month;
+        $diff = $month - $this->carbon()->startOfYear()->month;
+
+        if ($diff < $this->count) {
+            return [$this->carbon()->startOfYear()->month, $month];
+        }
+
+        return [$this->carbon()->subMonths($this->count)->month, $month];
+    }
+
+    protected function locale(): string
+    {
+        return Config::get('app.locale');
+    }
+
+    protected function formatPeriod(string $period): string
+    {
+        return match ($period) {
+            Period::DAY->value => "weekday($this->dateColumn)",
+            Period::WEEK->value => "week($this->dateColumn)",
+            Period::MONTH->value => "month($this->dateColumn)",
+            Period::YEAR->value => "year($this->dateColumn)",
+            default => '',
+        };
+    }
+
+    protected function formatDate(Collection $data): Collection
+    {
+        return $data->map(function ($datum) {
+            if ($this->period === Period::MONTH->value) {
+                $datum->label = Carbon::parse($this->year . '-' . $datum->label)->locale(self::locale())->monthName;
+            } elseif ($this->period === Period::DAY->value) {
+                $datum->label = Carbon::parse($this->year . '-' . $this->month . '-' . $datum->label)->locale(self::locale())->dayName;
+            } elseif ($this->period === Period::WEEK->value) {
+                $datum->label = 'Week ' . $datum->label;
+            } elseif ($this->period === Period::YEAR->value) {
+                $datum->label = intval($datum->label);
+            } else {
+                $datum->label = Carbon::parse($datum->label)->locale(self::locale())->toFormattedDateString();
+            }
+
+            return $datum;
+        });
     }
 
     protected function checkDateFormat(array $dates): void
