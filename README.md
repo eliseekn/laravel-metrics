@@ -21,6 +21,7 @@ composer require eliseekn/laravel-metrics
 ### With Eloquent Query
 
 Import the `Eliseekn\LaravelMetrics\LaravelMetrics` class in your controller and use it as follows :
+- Basic usage
 
 ```php
 // generate trends of products amount's sum for the current year
@@ -118,14 +119,15 @@ Order::metrics()
 
 ### Types of periods
 ```php
-byDay(int $count = 0)
-byWeek(int $count = 0)
-byMonth(int $count = 0)
-byYear(int $count = 0)
-between(string $startDate, string $endDate)
+LaravelMetrics::query(...)
+    ->byDay(int $count = 0) // or
+    ->byWeek(int $count = 0) // or
+    ->byMonth(int $count = 0) // or
+    ->byYear(int $count = 0) // or
+    ->between(string $startDate, string $endDate)
 ```
 
-**Note :** Periods are typically defined for the current day, week, month or year. However, you can define a specific value using dedicated methods. For example:
+**Note :** Periods are defined for the current day, week, month or year by default. However, you can define a specific value using dedicated methods. For example:
 
 ```php
 // generate trends of orders count for the year 2023
@@ -145,25 +147,28 @@ LaravelMetrics::query(Product::query())
 ```
 
 ```php
-forDay(int $day)
-forWeek(int $week)
-forMonth(int $month)
-forYear(int $year)
+LaravelMetrics::query(...)
+    ->forDay(int $day)
+    ->forWeek(int $week)
+    ->forMonth(int $month)
+    ->forYear(int $year)
 ```
 
 ### Types of aggregates
 ```php
-count(string $column = 'id')
-average(string $column)
-sum(string $column)
-max(string $column)
-min(string $column)
+LaravelMetrics::query(...)
+    ->count(string $column = 'id') // or
+    ->average(string $column) // or
+    ->sum(string $column) // or
+    ->max(string $column) // or
+    ->min(string $column)
 ```
 
 ### Types of data
 ```php
-trends() // retrieves trends values for charts
-metrics() // retrieves total value
+LaravelMetrics::query(...)
+    ->trends() // or
+    ->metrics()
 ```
 
 ## Translations
