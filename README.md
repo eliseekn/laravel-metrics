@@ -124,7 +124,7 @@ LaravelMetrics::query(...)
     ->byWeek(int $count = 0) // or
     ->byMonth(int $count = 0) // or
     ->byYear(int $count = 0) // or
-    ->between(string $startDate, string $endDate)
+    ->between(string $startDate, string $endDate, string $isoFormat)
 ```
 
 **Note :** Periods are defined for the current day, week, month or year by default. However, you can define a specific value using dedicated methods. For example:

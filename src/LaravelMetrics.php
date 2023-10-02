@@ -34,6 +34,7 @@ class LaravelMetrics
     protected int $month;
     protected int $day;
     protected int $week;
+    protected string $isoFormat = 'YYYY-MM-DD';
 
     public function __construct(protected Builder|QueryBuilder $builder)
     {
@@ -91,10 +92,11 @@ class LaravelMetrics
         return $this->by(Period::YEAR->value, $count);
     }
 
-    public function between(string $start, string $end): self
+    public function between(string $start, string $end, string $isoFormat = 'YYYY-MM-DD'): self
     {
         $this->checkDateFormat([$start, $end]);
         $this->period = [$start, $end];
+        $this->isoFormat = $isoFormat;
         return $this;
     }
 
@@ -426,7 +428,7 @@ class LaravelMetrics
             } elseif ($this->period === Period::YEAR->value) {
                 $datum->label = intval($datum->label);
             } else {
-                $datum->label = Carbon::parse($datum->label)->locale(self::locale())->toFormattedDateString();
+                $datum->label = Carbon::parse($datum->label)->locale(self::locale())->isoFormat($this->isoFormat);
             }
 
             return $datum;
