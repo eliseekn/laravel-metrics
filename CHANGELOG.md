@@ -2,10 +2,14 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.6
+
+- Add 'fillEmptyDates' method to fill data for empty dates
+- Fix get trends from 'between' method when using custom label
+
 ## 2.4.1
 
 - Fix undefined array key 'data' exception when trends are empty
-- Update README.md
 
 ## 2.4.0
 
@@ -34,7 +38,6 @@ All notable changes to `laravel-metrics` will be documented in this file
 
 ## 1.0.4 - 2022-01-04
 
-- Update README.md
 - Add demo project link
 
 ## 1.0.3 - 2021-12-30

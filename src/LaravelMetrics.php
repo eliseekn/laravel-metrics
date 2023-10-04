@@ -34,7 +34,9 @@ class LaravelMetrics
     protected int $month;
     protected int $day;
     protected int $week;
-    protected string $isoFormat = 'YYYY-MM-DD';
+    protected string $dateIsoFormat = 'YYYY-MM-DD';
+    protected bool $fillEmptyDates = false;
+    protected int $emptyDatesData = 0;
 
     public function __construct(protected Builder|QueryBuilder $builder)
     {
@@ -92,11 +94,11 @@ class LaravelMetrics
         return $this->by(Period::YEAR->value, $count);
     }
 
-    public function between(string $start, string $end, string $isoFormat = 'YYYY-MM-DD'): self
+    public function between(string $start, string $end, string $dateIsoFormat = 'YYYY-MM-DD'): self
     {
         $this->checkDateFormat([$start, $end]);
         $this->period = [$start, $end];
-        $this->isoFormat = $isoFormat;
+        $this->dateIsoFormat = $dateIsoFormat;
         return $this;
     }
 
@@ -171,6 +173,13 @@ class LaravelMetrics
     public function labelColumn(string $column): self
     {
         $this->labelColumn = $this->table . '.' . $column;
+        return $this;
+    }
+
+    public function fillEmptyDates(int $value = 0): self
+    {
+        $this->fillEmptyDates = true;
+        $this->emptyDatesData = $value;
         return $this;
     }
 
@@ -328,6 +337,46 @@ class LaravelMetrics
         return $label . " as label";
     }
 
+    protected function generateDateRange($startDate, $endDate)
+    {
+        $startDate = Carbon::parse($startDate);
+        $endDate = Carbon::parse($endDate);
+
+        $dateRange = [];
+        $currentDate = $startDate;
+
+        while ($currentDate <= $endDate) {
+            $dateRange[] = $currentDate->format('Y-m-d');
+            $currentDate->addDay();
+        }
+
+        return $dateRange;
+    }
+
+    protected function fillEmptyDatesFromCollection(Collection $data): Collection
+    {
+        $dateRange = $this->generateDateRange($this->period[0], $this->period[1]);
+        $mergedData = [];
+
+        foreach ($dateRange as $date) {
+            $dataForDate = $data->where('label', $date)->first();
+
+            if ($dataForDate) {
+                $mergedData[] = [
+                    'label' => $dataForDate->label,
+                    'data' => $dataForDate->data
+                ];
+            } else {
+                $mergedData[] = [
+                    'label' => $date,
+                    'data' => $this->emptyDatesData
+                ];
+            }
+        }
+
+        return collect($mergedData);
+    }
+
     /**
      * Generate metrics data
      */
@@ -342,9 +391,13 @@ class LaravelMetrics
      */
     public function trends(): array
     {
-        $trendsData = !is_null($this->period)
-            ? $this->formatDate($this->trendsData())
-            : $this->trendsData();
+        $trendsData = $this->trendsData();
+
+        if ($this->fillEmptyDates) {
+            $trendsData = $this->fillEmptyDatesFromCollection($trendsData);
+        }
+
+        $trendsData = $this->formatDate($trendsData);
 
         $result = [
             'labels' => [],
@@ -352,8 +405,8 @@ class LaravelMetrics
         ];
 
         foreach ($trendsData as $data) {
-            $result['labels'][] = $data->label;
-            $result['data'][] = $data->data;
+            $result['labels'][] = $data['label'];
+            $result['data'][] = $data['data'];
         }
 
         return $result;
@@ -419,16 +472,20 @@ class LaravelMetrics
     protected function formatDate(Collection $data): Collection
     {
         return $data->map(function ($datum) {
+            if (!is_numeric($datum['label']) && !DateTime::createFromFormat('Y-m-d',$datum['label'])) {
+                return $datum;
+            }
+
             if ($this->period === Period::MONTH->value) {
-                $datum->label = Carbon::parse($this->year . '-' . $datum->label)->locale(self::locale())->monthName;
+                $datum['label'] = Carbon::parse($this->year . '-' . $datum['label'])->locale(self::locale())->monthName;
             } elseif ($this->period === Period::DAY->value) {
-                $datum->label = Carbon::parse($this->year . '-' . $this->month . '-' . $datum->label)->locale(self::locale())->dayName;
+                $datum['label'] = Carbon::parse($this->year . '-' . $this->month . '-' . $datum['label'])->locale(self::locale())->dayName;
             } elseif ($this->period === Period::WEEK->value) {
-                $datum->label = 'Week ' . $datum->label;
+                $datum['label'] = 'Week ' . $datum['label'];
             } elseif ($this->period === Period::YEAR->value) {
-                $datum->label = intval($datum->label);
+                $datum['label'] = intval($datum['label']);
             } else {
-                $datum->label = Carbon::parse($datum->label)->locale(self::locale())->isoFormat($this->isoFormat);
+                $datum['label'] = Carbon::parse($datum['label'])->locale(self::locale())->isoFormat($this->dateIsoFormat);
             }
 
             return $datum;

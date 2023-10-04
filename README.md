@@ -124,7 +124,7 @@ LaravelMetrics::query(...)
     ->byWeek(int $count = 0) // or
     ->byMonth(int $count = 0) // or
     ->byYear(int $count = 0) // or
-    ->between(string $startDate, string $endDate, string $isoFormat)
+    ->between(string $startDate, string $endDate, string $dateIsoFormat)
 ```
 
 **Note :** Periods are defined for the current day, week, month or year by default. However, you can define a specific value using dedicated methods. For example:
@@ -152,6 +152,16 @@ LaravelMetrics::query(...)
     ->forWeek(int $week)
     ->forMonth(int $month)
     ->forYear(int $year)
+```
+
+**Note :** Make sure to employ the 'fillEmptyDates' method when utilizing the 'between' period to automatically populate any missing dates with a default value. For example:
+
+```php
+LaravelMetrics::query(...)
+    ->count()
+    ->between(Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d'))
+    ->fillEmptyDates()
+    ->trends();
 ```
 
 ### Types of aggregates
