@@ -88,7 +88,7 @@ LaravelMetrics::query(Order::query())
 - Using custom table
 ```php
 LaravelMetrics::query(
-    Order::query()->join('orders', 'orders.id', 'users.order_id')
+    Order::query()->join('users', 'orders.id', 'users.order_id')
 )
     ->count()
     ->table('users')
