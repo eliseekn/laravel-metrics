@@ -164,6 +164,176 @@ class LaravelMetrics
         return $this->aggregate(Aggregate::MIN->value, $column);
     }
 
+    protected function countBy(string $period, string $column = 'id', int $count = 0): self
+    {
+        return $this
+            ->by($period, $count)
+            ->aggregate(Aggregate::COUNT->value, $column);
+    }
+
+    protected function averageBy(string $period, string $column = 'id', int $count = 0): self
+    {
+        return $this
+            ->by($period, $count)
+            ->aggregate(Aggregate::AVERAGE->value, $column);
+    }
+
+    protected function sumBy(string $period, string $column = 'id', int $count = 0): self
+    {
+        return $this
+            ->by($period, $count)
+            ->aggregate(Aggregate::SUM->value, $column);
+    }
+
+    protected function maxBy(string $period, string $column = 'id', int $count = 0): self
+    {
+        return $this
+            ->by($period, $count)
+            ->aggregate(Aggregate::MAX->value, $column);
+    }
+
+    protected function minBy(string $period, string $column = 'id', int $count = 0): self
+    {
+        return $this
+            ->by($period, $count)
+            ->aggregate(Aggregate::MIN->value, $column);
+    }
+
+    public function countByDay(string $column = 'id', int $count = 0): self
+    {
+        return $this->countBy(Period::DAY->value, $column, $count);
+    }
+
+    public function countByWeek(string $column = 'id', int $count = 0): self
+    {
+        return $this->countBy(Period::WEEK->value, $column, $count);
+    }
+
+    public function countByMonth(string $column = 'id', int $count = 0): self
+    {
+        return $this->countBy(Period::MONTH->value, $column, $count);
+    }
+
+    public function countByYear(string $column = 'id', int $count = 0): self
+    {
+        return $this->countBy(Period::YEAR->value, $column, $count);
+    }
+
+    public function sumByDay(string $column, int $count = 0): self
+    {
+        return $this->sumBy(Period::DAY->value, $column, $count);
+    }
+
+    public function sumByWeek(string $column, int $count = 0): self
+    {
+        return $this->sumBy(Period::WEEK->value, $column, $count);
+    }
+
+    public function sumByMonth(string $column, int $count = 0): self
+    {
+        return $this->sumBy(Period::MONTH->value, $column, $count);
+    }
+
+    public function sumByYear(string $column, int $count = 0): self
+    {
+        return $this->sumBy(Period::YEAR->value, $column, $count);
+    }
+
+    public function averageByDay(string $column, int $count = 0): self
+    {
+        return $this->averageBy(Period::DAY->value, $column, $count);
+    }
+
+    public function averageByWeek(string $column, int $count = 0): self
+    {
+        return $this->averageBy(Period::WEEK->value, $column, $count);
+    }
+
+    public function averageByMonth(string $column, int $count = 0): self
+    {
+        return $this->averageBy(Period::MONTH->value, $column, $count);
+    }
+
+    public function averageByYear(string $column, int $count = 0): self
+    {
+        return $this->averageBy(Period::YEAR->value, $column, $count);
+    }
+
+    public function maxByDay(string $column, int $count = 0): self
+    {
+        return $this->maxBy(Period::DAY->value, $column, $count);
+    }
+
+    public function maxByWeek(string $column, int $count = 0): self
+    {
+        return $this->maxBy(Period::WEEK->value, $column, $count);
+    }
+
+    public function maxByMonth(string $column, int $count = 0): self
+    {
+        return $this->maxBy(Period::MONTH->value, $column, $count);
+    }
+
+    public function maxByYear(string $column, int $count = 0): self
+    {
+        return $this->maxBy(Period::YEAR->value, $column, $count);
+    }
+
+    public function minByDay(string $column, int $count = 0): self
+    {
+        return $this->minBy(Period::DAY->value, $column, $count);
+    }
+
+    public function minByWeek(string $column, int $count = 0): self
+    {
+        return $this->minBy(Period::WEEK->value, $column, $count);
+    }
+
+    public function minByMonth(string $column, int $count = 0): self
+    {
+        return $this->minBy(Period::MONTH->value, $column, $count);
+    }
+
+    public function minByYear(string $column, int $count = 0): self
+    {
+        return $this->minBy(Period::YEAR->value, $column, $count);
+    }
+
+    public function countBetween(array $period, string $column = 'id', string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this
+            ->count($column)
+            ->between($period[0], $period[1], $dateIsoFormat);
+    }
+
+    public function sumBetween(array $period, string $column, string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this
+            ->sum($column)
+            ->between($period[0], $period[1], $dateIsoFormat);
+    }
+
+    public function averageBetween(array $period, string $column, string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this
+            ->average($column)
+            ->between($period[0], $period[1], $dateIsoFormat);
+    }
+
+    public function maxBetween(array $period, string $column, string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this
+            ->max($column)
+            ->between($period[0], $period[1], $dateIsoFormat);
+    }
+
+    public function minBetween(array $period, string $column, string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this
+            ->min($column)
+            ->between($period[0], $period[1], $dateIsoFormat);
+    }
+
     public function dateColumn(string $column): self
     {
         $this->dateColumn = $this->table . '.' . $column;

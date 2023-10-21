@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.6.1
+
+- Add Combined periods and aggregates methods
+
 ## 2.6
 
 - Add 'fillEmptyDates' method to fill data for empty dates

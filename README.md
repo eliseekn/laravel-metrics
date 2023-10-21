@@ -134,7 +134,7 @@ LaravelMetrics::query(...)
 LaravelMetrics::query(Order::query())
     ->count()
     ->byMonth(12)
-    ->forYear(2023)
+    ->forYear(now()->year)
     ->labelColumn('status')
     ->trends();
 
@@ -179,6 +179,28 @@ LaravelMetrics::query(...)
 LaravelMetrics::query(...)
     ->trends() // or
     ->metrics()
+```
+
+### Combining periods and aggregates
+Combining different time periods and data aggregates can enhance your overall experience. For example :
+
+```php
+LaravelMetrics::query(...)
+    ->sumByMonth()
+    ->trends();
+
+LaravelMetrics::query(...)
+    ->counyByMonth(count: 12)
+    ->forYear(now()->year)
+    ->labelColumn('status')
+    ->trends();
+
+LaravelMetrics::query(...)
+    ->countBetween(Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d'))
+    ->fillEmptyDates()
+    ->trends();
+
+...
 ```
 
 ## Translations
