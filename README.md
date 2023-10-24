@@ -130,7 +130,7 @@ LaravelMetrics::query(...)
 **Note :** Periods are defined for the current day, week, month or year by default. However, you can define a specific value using dedicated methods. For example:
 
 ```php
-// generate trends of orders count for the year 2023
+// generate trends of orders count for the current year
 LaravelMetrics::query(Order::query())
     ->count()
     ->byMonth(12)
@@ -190,13 +190,13 @@ LaravelMetrics::query(...)
     ->trends();
 
 LaravelMetrics::query(...)
-    ->counyByMonth(count: 12)
+    ->countByMonth(count: 12)
     ->forYear(now()->year)
     ->labelColumn('status')
     ->trends();
 
 LaravelMetrics::query(...)
-    ->countBetween(Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d'))
+    ->countBetween([Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d')])
     ->fillEmptyDates()
     ->trends();
 
