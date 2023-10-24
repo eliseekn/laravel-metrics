@@ -222,6 +222,7 @@ If you discover any security related issues, please email `eliseekn@gmail.com` i
 ## Credits
 
 -   [N'Guessan Kouadio Elisée](https://github.com/eliseekn)
+-   [Chris Brown](https://github.com/drbyte)
 
 ## License
 
