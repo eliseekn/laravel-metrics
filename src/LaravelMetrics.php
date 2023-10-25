@@ -523,28 +523,29 @@ class LaravelMetrics
         return $dateRange;
     }
 
-    protected function fillEmptyDatesFromCollection(Collection $data): Collection
+    protected function fillEmptyDatesFromCollection(array $data): array
     {
         $dateRange = $this->generateDateRange($this->period[0], $this->period[1]);
-        $mergedData = [];
+        $data = collect($data);
+        $result = [];
 
         foreach ($dateRange as $date) {
             $dataForDate = $data->where('label', $date)->first();
 
             if ($dataForDate) {
-                $mergedData[] = [
-                    'label' => $dataForDate->label,
-                    'data' => $dataForDate->data
+                $result[] = [
+                    'label' => $dataForDate['label'],
+                    'data' => $dataForDate['data']
                 ];
             } else {
-                $mergedData[] = [
+                $result[] = [
                     'label' => $date,
                     'data' => $this->emptyDatesData
                 ];
             }
         }
 
-        return collect($mergedData);
+        return $result;
     }
 
     /**
@@ -561,7 +562,7 @@ class LaravelMetrics
      */
     public function trends(): array
     {
-        $trendsData = $this->trendsData();
+        $trendsData = $this->trendsData()->toArray();
 
         if ($this->fillEmptyDates) {
             $trendsData = $this->fillEmptyDatesFromCollection($trendsData);
@@ -639,10 +640,10 @@ class LaravelMetrics
         };
     }
 
-    protected function formatDate(Collection $data): Collection
+    protected function formatDate(array $data): array
     {
-        return $data->map(function ($datum) {
-            if (!is_numeric($datum['label']) && !DateTime::createFromFormat('Y-m-d',$datum['label'])) {
+        return array_map(function ($datum) {
+            if (!is_numeric($datum['label']) && !DateTime::createFromFormat('Y-m-d', $datum['label'])) {
                 return $datum;
             }
 
@@ -659,7 +660,7 @@ class LaravelMetrics
             }
 
             return $datum;
-        });
+        }, $data);
     }
 
     protected function checkDateFormat(array $dates): void
