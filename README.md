@@ -73,6 +73,7 @@ LaravelMetrics::query(Post::query())
 LaravelMetrics::query(Post::query()))
     ->count()
     ->between('2020-05-01', '2022-08-21')
+    ->groupByDay()
     ->trends();
 ```
 
@@ -187,6 +188,7 @@ LaravelMetrics::query(...)
 
 LaravelMetrics::query(...)
     ->countBetween([Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d')])
+    ->groupByDay()
     ->trends();
 
 ...
