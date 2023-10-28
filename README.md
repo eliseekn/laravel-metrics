@@ -266,6 +266,14 @@ LaravelMetrics::query(...)
     ->trends();
 ```
 
+```php
+LaravelMetrics::query(...)
+    ->groupByYear() //or
+    ->groupByMonth() //or
+    ->groupByWeek() //or
+    ->groupByDay()
+```
+
 ## Translations
 
 Days and months names are automatically translated using `config(app.locale)` except 'week' period.
