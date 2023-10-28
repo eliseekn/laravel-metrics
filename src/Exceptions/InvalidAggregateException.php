@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Eliseekn\LaravelMetrics\Exceptions;
@@ -10,7 +11,8 @@ use Exception;
  */
 class InvalidAggregateException extends Exception
 {
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct('Invalid aggregate value. Valid aggregate is count, sum, max, min or avg');
     }
 }

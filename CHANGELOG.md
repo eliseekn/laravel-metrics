@@ -2,6 +2,13 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.7.0
+
+- Replace fillEmptyData by fillMissingData
+- Set fillMissingData as global method
+- Add groupBy methods for between period
+- Fix some bugs
+
 ## 2.6.1
 
 - Add Combined periods and aggregates methods

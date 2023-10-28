@@ -154,16 +154,6 @@ LaravelMetrics::query(...)
     ->forYear(int $year)
 ```
 
-**Note :** Make sure to employ the 'fillEmptyDates' method when utilizing the 'between' period to automatically populate any missing dates with a default value. For example:
-
-```php
-LaravelMetrics::query(...)
-    ->count()
-    ->between(Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d'))
-    ->fillEmptyDates()
-    ->trends();
-```
-
 ### Types of aggregates
 ```php
 LaravelMetrics::query(...)
@@ -186,7 +176,7 @@ Combining different time periods and data aggregates can enhance your overall ex
 
 ```php
 LaravelMetrics::query(...)
-    ->sumByMonth()
+    ->sumByYear()
     ->trends();
 
 LaravelMetrics::query(...)
@@ -197,10 +187,83 @@ LaravelMetrics::query(...)
 
 LaravelMetrics::query(...)
     ->countBetween([Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d')])
-    ->fillEmptyDates()
     ->trends();
 
 ...
+```
+
+Possible combinations :
+
+```php
+LaravelMetrics::query(...)
+    ->countByMonth(...) //or
+    ->countByYear(...) //or
+    ->countByDay(...) //or
+    ->countByWeek(...) //or
+    ->sumByMonth(...) //or
+    ->sumByYear(...) //or
+    ->sumByDay(...) //or
+    ->sumByWeek(...) //or
+    ->averageByMonth(...) //or
+    ->averageByYear(...) //or
+    ->averageByDay(...) //or
+    ->averageByWeek(...) //or
+    ->maxByMonth(...) //or
+    ->maxByYear(...) //or
+    ->maxByDay(...) //or
+    ->maxByWeek(...) //or
+    ->minByMonth(...) //or
+    ->minByYear(...) //or
+    ->minByDay(...) //or
+    ->minByWeek(...) //or
+    ->countBetween(...) //or
+    ->sumBetween(...) //or
+    ->averageBetween(...) //or
+    ->maxBetween(...) //or
+    ->minBetween(...)
+```
+
+### Fill missing data with default value
+You can fill missing data with default value with the global method ```fillMissingData```, especially for trends. For example :
+
+```php
+LaravelMetrics::query(...)
+    ->countBetween([Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d')])
+    ->fillMissingData()
+    ->trends();
+
+LaravelMetrics::query(...)
+    ->sumByYear(count: 5)
+    ->fillMissingData()
+    ->trends();
+
+...
+```
+
+**Note :** For custom ```labelColumn```definition, you must define a ```missingDataLabel```. For example :
+
+```php
+LaravelMetrics::query(...)
+    ->countByMonth(count: 12)
+    ->forYear(now()->year)
+    ->labelColumn('status')
+    ->fillMissingData(missingDataLabels: [
+        'pending',
+        'delivered',
+        'cancelled'
+    ])
+    ->trends();
+```
+
+### Group period (only when using ```between``` method)
+You can group period by days, months, weeks or years when using the ```between``` method. For example :
+
+```php
+LaravelMetrics::query(...)
+    ->countBetween([Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d')])
+    ->fillMissingData()
+    ->groupByMonth()
+    ->trends();
 ```
 
 ## Translations

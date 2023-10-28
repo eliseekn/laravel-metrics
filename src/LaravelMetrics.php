@@ -1,10 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Eliseekn\LaravelMetrics;
 
 use Carbon\Carbon;
-use DateTime;
 use Eliseekn\LaravelMetrics\Enums\Aggregate;
 use Eliseekn\LaravelMetrics\Enums\Period;
 use Eliseekn\LaravelMetrics\Exceptions\InvalidAggregateException;
@@ -12,9 +12,8 @@ use Eliseekn\LaravelMetrics\Exceptions\InvalidPeriodException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Eliseekn\LaravelMetrics\Exceptions\InvalidDateFormatException;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
 /**
  * LaravelMetrics
@@ -23,31 +22,51 @@ use Illuminate\Support\Facades\Config;
  */
 class LaravelMetrics
 {
+    use DatesFunctions;
+
     protected string $table;
+
     protected string $column = 'id';
+
     protected string|array|null $period;
+
     protected string $aggregate;
+
     protected string $dateColumn;
+
     protected ?string $labelColumn = null;
+
     protected int $count = 0;
+
     protected int $year;
+
     protected int $month;
+
     protected int $day;
+
     protected int $week;
+
     protected string $dateIsoFormat = 'YYYY-MM-DD';
-    protected bool $fillEmptyDates = false;
-    protected int $emptyDatesData = 0;
+
+    protected bool $fillMissingData = false;
+
+    protected ?array $missingDataLabels = null;
+
+    protected int $missingDataValue = 0;
+
+    protected string $groupBy;
 
     public function __construct(protected Builder|QueryBuilder $builder)
     {
         $this->table = $this->builder->from;
-        $this->dateColumn = $this->table . '.created_at';
+        $this->dateColumn = $this->table.'.created_at';
         $this->period = null;
         $this->aggregate = Aggregate::COUNT->value;
         $this->year = Carbon::now()->year;
         $this->month = Carbon::now()->month;
         $this->day = Carbon::now()->day;
         $this->week = Carbon::now()->week;
+        $this->groupBy = Period::YEAR->value;
     }
 
     public static function query(Builder|QueryBuilder $builder): self
@@ -58,6 +77,7 @@ class LaravelMetrics
     public function table(string $table): self
     {
         $this->table = $table;
+
         return $this;
     }
 
@@ -65,12 +85,13 @@ class LaravelMetrics
     {
         $period = strtolower($period);
 
-        if (!in_array($period, Period::values())) {
+        if (! in_array($period, Period::values())) {
             throw new InvalidPeriodException();
         }
 
         $this->period = $period;
         $this->count = $count;
+
         return $this;
     }
 
@@ -99,30 +120,62 @@ class LaravelMetrics
         $this->checkDateFormat([$start, $end]);
         $this->period = [$start, $end];
         $this->dateIsoFormat = $dateIsoFormat;
+
         return $this;
+    }
+
+    protected function groupBy(string $period): self
+    {
+        $this->groupBy = $period;
+
+        return $this;
+    }
+
+    public function groupByYear(): self
+    {
+        return $this->groupBy(Period::YEAR->value);
+    }
+
+    public function groupByMonth(): self
+    {
+        return $this->groupBy(Period::MONTH->value);
+    }
+
+    public function groupByWeek(): self
+    {
+        return $this->groupBy(Period::WEEK->value);
+    }
+
+    public function groupByDay(): self
+    {
+        return $this->groupBy(Period::DAY->value);
     }
 
     public function forDay(int $day): self
     {
         $this->day = $day;
+
         return $this;
     }
 
     public function forWeek(int $week): self
     {
         $this->week = $week;
+
         return $this;
     }
 
     public function forMonth(int $month): self
     {
         $this->month = $month;
+
         return $this;
     }
 
     public function forYear(int $year): self
     {
         $this->year = $year;
+
         return $this;
     }
 
@@ -130,12 +183,13 @@ class LaravelMetrics
     {
         $aggregate = strtolower($aggregate);
 
-        if (!in_array($aggregate, Aggregate::values())) {
+        if (! in_array($aggregate, Aggregate::values())) {
             throw new InvalidAggregateException();
         }
 
         $this->aggregate = $aggregate;
-        $this->column = $this->table . '.' . $column;
+        $this->column = $this->table.'.'.$column;
+
         return $this;
     }
 
@@ -336,20 +390,24 @@ class LaravelMetrics
 
     public function dateColumn(string $column): self
     {
-        $this->dateColumn = $this->table . '.' . $column;
+        $this->dateColumn = $this->table.'.'.$column;
+
         return $this;
     }
 
     public function labelColumn(string $column): self
     {
-        $this->labelColumn = $this->table . '.' . $column;
+        $this->labelColumn = $this->table.'.'.$column;
+
         return $this;
     }
 
-    public function fillEmptyDates(int $value = 0): self
+    public function fillMissingData(int $missingDataValue = 0, array $missingDataLabels = null): self
     {
-        $this->fillEmptyDates = true;
-        $this->emptyDatesData = $value;
+        $this->fillMissingData = true;
+        $this->missingDataLabels = $missingDataLabels;
+        $this->missingDataValue = $missingDataValue;
+
         return $this;
     }
 
@@ -405,7 +463,7 @@ class LaravelMetrics
                 })
                 ->when($this->count > 1, function (Builder|QueryBuilder $query) {
                     return $query->whereBetween(DB::raw($this->formatPeriod(Period::YEAR->value)), [
-                        Carbon::now()->subYears($this->count)->year, $this->year
+                        Carbon::now()->subYears($this->count)->year, $this->year,
                     ]);
                 })
                 ->first(),
@@ -420,7 +478,7 @@ class LaravelMetrics
     {
         if (is_array($this->period)) {
             return $this->builder
-                ->selectRaw($this->asData() . ", " . $this->asLabel("date($this->dateColumn)", false))
+                ->selectRaw($this->asData().', '.$this->asLabel("date($this->dateColumn)", false))
                 ->whereBetween(DB::raw("date($this->dateColumn)"), [$this->period[0], $this->period[1]])
                 ->groupBy('label')
                 ->orderBy('label')
@@ -429,7 +487,7 @@ class LaravelMetrics
 
         return match ($this->period) {
             Period::DAY->value => $this->builder
-                ->selectRaw($this->asData() . ", " . $this->asLabel(Period::DAY->value))
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::DAY->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
@@ -443,7 +501,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::WEEK->value => $this->builder
-                ->selectRaw($this->asData() . ", " . $this->asLabel(Period::WEEK->value))
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::WEEK->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
@@ -457,7 +515,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::MONTH->value => $this->builder
-                ->selectRaw($this->asData() . ", " . $this->asLabel(Period::MONTH->value))
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::MONTH->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
@@ -470,13 +528,13 @@ class LaravelMetrics
                 ->get(),
 
             Period::YEAR->value => $this->builder
-                ->selectRaw($this->asData() . ", " . $this->asLabel(Period::YEAR->value))
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::YEAR->value))
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::YEAR->value)), $this->year);
                 })
                 ->when($this->count > 1, function (Builder|QueryBuilder $query) {
                     return $query->whereBetween(DB::raw($this->formatPeriod(Period::YEAR->value)), [
-                        Carbon::now()->subYears($this->count)->year, $this->year
+                        Carbon::now()->subYears($this->count)->year, $this->year,
                     ]);
                 })
                 ->groupBy('label')
@@ -484,7 +542,7 @@ class LaravelMetrics
                 ->get(),
 
             default => $this->builder
-                ->selectRaw($this->asData() . ", " . $this->asLabel())
+                ->selectRaw($this->asData().', '.$this->asLabel())
                 ->groupBy('label')
                 ->orderBy('label')
                 ->get(),
@@ -496,52 +554,59 @@ class LaravelMetrics
         return "$this->aggregate($this->column) as data";
     }
 
-    protected function asLabel(?string $label = null, bool $format = true): string
+    protected function asLabel(string $label = null, bool $format = true): string
     {
         if (is_null($this->labelColumn)) {
-            $label = !$format ? $label : $this->formatPeriod($label);
+            $label = ! $format ? $label : $this->formatPeriod($label);
         } else {
             $label = $this->labelColumn;
         }
 
-        return $label . " as label";
+        return $label.' as label';
     }
 
-    protected function generateDateRange($startDate, $endDate)
+    protected function populateMissingDataForPeriod(array $data): array
     {
-        $startDate = Carbon::parse($startDate);
-        $endDate = Carbon::parse($endDate);
-
-        $dateRange = [];
-        $currentDate = $startDate;
-
-        while ($currentDate <= $endDate) {
-            $dateRange[] = $currentDate->format('Y-m-d');
-            $currentDate->addDay();
-        }
-
-        return $dateRange;
-    }
-
-    protected function fillEmptyDatesFromCollection(array $data): array
-    {
-        $dateRange = $this->generateDateRange($this->period[0], $this->period[1]);
+        $dates = $this->getCustomPeriod();
         $data = collect($data);
         $result = [];
 
-        foreach ($dateRange as $date) {
+        foreach ($dates as $date) {
             $dataForDate = $data->where('label', $date)->first();
 
             if ($dataForDate) {
                 $result[] = [
                     'label' => $dataForDate['label'],
-                    'data' => $dataForDate['data']
+                    'data' => $dataForDate['data'],
                 ];
             } else {
                 $result[] = [
                     'label' => $date,
-                    'data' => $this->emptyDatesData
+                    'data' => $this->missingDataValue,
                 ];
+            }
+        }
+
+        $result = $this->formatDate($result);
+
+        return $this->formatTrends($result);
+    }
+
+    protected function populateMissingData(array $labels, array $data): array
+    {
+        $result = [
+            'labels' => [],
+            'data' => [],
+        ];
+
+        foreach ($labels as $label => $defaultValue) {
+            $key = array_search($label, $data['labels']);
+            $result['labels'][] = $label;
+
+            if ($key !== false) {
+                $result['data'][] = $data['data'][$key];
+            } else {
+                $result['data'][] = $defaultValue;
             }
         }
 
@@ -554,6 +619,7 @@ class LaravelMetrics
     public function metrics(): mixed
     {
         $metricsData = $this->metricsData();
+
         return is_null($metricsData) ? 0 : $metricsData->data;
     }
 
@@ -562,115 +628,55 @@ class LaravelMetrics
      */
     public function trends(): array
     {
-        $trendsData = $this->trendsData()->toArray();
+        $trendsData = $this
+            ->trendsData()
+            ->toArray();
 
-        if ($this->fillEmptyDates) {
-            $trendsData = $this->fillEmptyDatesFromCollection($trendsData);
+        if (! $this->fillMissingData) {
+            $trendsData = $this->formatDate($trendsData);
+
+            return $this->formatTrends($trendsData);
+        } else {
+            if (! is_null($this->labelColumn)) {
+                $trendsData = $this->formatTrends($trendsData);
+
+                return $this->populateMissingData($this->getLabelsData(), $trendsData);
+            }
+
+            if (is_array($this->period)) {
+                return $this->populateMissingDataForPeriod($trendsData);
+            }
+
+            if (is_string($this->period)) {
+                $trendsData = $this->formatDate($trendsData);
+
+                return $this->populateMissingData($this->getPeriod(), $this->formatTrends($trendsData));
+            }
         }
 
-        $trendsData = $this->formatDate($trendsData);
+        return [
+            'labels' => [],
+            'data' => [],
+        ];
+    }
 
+    protected function formatTrends(array $data): array
+    {
         $result = [
             'labels' => [],
-            'data' => []
+            'data' => [],
         ];
 
-        foreach ($trendsData as $data) {
-            $result['labels'][] = $data['label'];
-            $result['data'][] = $data['data'];
+        foreach ($data as $datum) {
+            $result['labels'][] = $datum['label'];
+            $result['data'][] = $datum['data'];
         }
 
         return $result;
     }
 
-    protected function carbon(): Carbon
-    {
-        return Carbon::parse($this->year . '-' . $this->month . '-' . $this->day);
-    }
-
-    protected function getDayPeriod(): array
-    {
-        $day = $this->month !== Carbon::now()->month ? $this->carbon()->endOfMonth()->day : $this->day;
-        $diff = $day - $this->carbon()->startOfMonth()->day;
-
-        if ($diff < $this->count) {
-            return [$this->carbon()->startOfMonth()->day, $day];
-        }
-
-        return [$this->carbon()->subDays($this->count)->day, $day];
-    }
-
-    protected function getWeekPeriod(): array
-    {
-        $week = $this->month !== Carbon::now()->month ? $this->carbon()->endOfMonth()->week : $this->week;
-        $diff = $week - $this->carbon()->startOfMonth()->week;
-
-        if ($diff < $this->count) {
-            return [$this->carbon()->startOfMonth()->week, $week];
-        }
-
-        return [$this->carbon()->subWeeks($this->count)->week, $week];
-    }
-
-    protected function getMonthPeriod(): array
-    {
-        $month = $this->year !== Carbon::now()->year ? $this->carbon()->endOfYear()->month : $this->month;
-        $diff = $month - $this->carbon()->startOfYear()->month;
-
-        if ($diff < $this->count) {
-            return [$this->carbon()->startOfYear()->month, $month];
-        }
-
-        return [$this->carbon()->subMonths($this->count)->month, $month];
-    }
-
     protected function locale(): string
     {
         return Config::get('app.locale');
-    }
-
-    protected function formatPeriod(string $period): string
-    {
-        return match ($period) {
-            Period::DAY->value => "weekday($this->dateColumn)",
-            Period::WEEK->value => "week($this->dateColumn)",
-            Period::MONTH->value => "month($this->dateColumn)",
-            Period::YEAR->value => "year($this->dateColumn)",
-            default => '',
-        };
-    }
-
-    protected function formatDate(array $data): array
-    {
-        return array_map(function ($datum) {
-            if (!is_numeric($datum['label']) && !DateTime::createFromFormat('Y-m-d', $datum['label'])) {
-                return $datum;
-            }
-
-            if ($this->period === Period::MONTH->value) {
-                $datum['label'] = Carbon::parse($this->year . '-' . $datum['label'])->locale(self::locale())->monthName;
-            } elseif ($this->period === Period::DAY->value) {
-                $datum['label'] = Carbon::parse($this->year . '-' . $this->month . '-' . $datum['label'])->locale(self::locale())->dayName;
-            } elseif ($this->period === Period::WEEK->value) {
-                $datum['label'] = 'Week ' . $datum['label'];
-            } elseif ($this->period === Period::YEAR->value) {
-                $datum['label'] = intval($datum['label']);
-            } else {
-                $datum['label'] = Carbon::parse($datum['label'])->locale(self::locale())->isoFormat($this->dateIsoFormat);
-            }
-
-            return $datum;
-        }, $data);
-    }
-
-    protected function checkDateFormat(array $dates): void
-    {
-        foreach ($dates as $date) {
-            $d = DateTime::createFromFormat('Y-m-d', $date);
-
-            if (!$d || $d->format('Y-m-d') !== $date) {
-                throw new InvalidDateFormatException();
-            }
-        }
     }
 }
