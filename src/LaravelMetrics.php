@@ -66,7 +66,7 @@ class LaravelMetrics
         $this->month = Carbon::now()->month;
         $this->day = Carbon::now()->day;
         $this->week = Carbon::now()->week;
-        $this->groupBy = Period::YEAR->value;
+        $this->groupBy = Period::DAY->value;
     }
 
     public static function query(Builder|QueryBuilder $builder): self

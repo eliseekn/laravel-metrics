@@ -188,7 +188,6 @@ LaravelMetrics::query(...)
 
 LaravelMetrics::query(...)
     ->countBetween([Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d')])
-    ->groupByDay()
     ->trends();
 
 ...
@@ -258,13 +257,12 @@ LaravelMetrics::query(...)
 ```
 
 ### Group period (only when using ```between``` method)
-You can group period by days, months, weeks or years when using the ```between``` method  (***default is year***). For example :
+You can group period by days, months, weeks or years when using the ```between``` method  (***default is day***). For example :
 
 ```php
 LaravelMetrics::query(...)
     ->countBetween([Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d')])
     ->fillMissingData()
-    ->groupByMonth()
     ->trends();
 ```
 
