@@ -256,7 +256,7 @@ LaravelMetrics::query(...)
 ```
 
 ### Group period (only when using ```between``` method)
-You can group period by days, months, weeks or years when using the ```between``` method  (***default by year***). For example :
+You can group period by days, months, weeks or years when using the ```between``` method  (***default is year***). For example :
 
 ```php
 LaravelMetrics::query(...)
