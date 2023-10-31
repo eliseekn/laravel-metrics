@@ -632,6 +632,8 @@ class LaravelMetrics
             ->trendsData()
             ->toArray();
 
+        $trendsData = array_map(fn ($datum) => (array) $datum, $trendsData);
+
         if (! $this->fillMissingData) {
             $trendsData = $this->formatDate($trendsData);
 
