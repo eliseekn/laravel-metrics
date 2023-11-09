@@ -620,7 +620,7 @@ class LaravelMetrics
     {
         $metricsData = $this->metricsData();
 
-        return is_null($metricsData) ? 0 : $metricsData->data;
+        return is_null($metricsData) ? 0 : ($metricsData->data ?? 0);
     }
 
     /**
