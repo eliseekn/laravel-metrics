@@ -2,7 +2,7 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
-## 2.7.1
+## 2.7.3
 
 - Fix null exception on get metrics data
 
