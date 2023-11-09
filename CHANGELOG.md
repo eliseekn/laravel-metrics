@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.7.1
+
+- Fix null exception on get metrics data
+
 ## 2.7.0
 
 - Replace fillEmptyData by fillMissingData
