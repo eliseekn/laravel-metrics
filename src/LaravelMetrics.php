@@ -114,7 +114,6 @@ class LaravelMetrics
     {
         return $this->by(Period::YEAR->value, $count);
     }
-
     public function between(string $start, string $end, string $dateIsoFormat = 'YYYY-MM-DD'): self
     {
         $this->checkDateFormat([$start, $end]);
@@ -122,6 +121,11 @@ class LaravelMetrics
         $this->dateIsoFormat = $dateIsoFormat;
 
         return $this;
+    }
+
+    public function from(string $date, string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this->between($date, Carbon::now()->format('Y-m-d'), $dateIsoFormat);
     }
 
     protected function groupBy(string $period): self
@@ -386,6 +390,41 @@ class LaravelMetrics
         return $this
             ->min($column)
             ->between($period[0], $period[1], $dateIsoFormat);
+    }
+
+    public function countFrom(string $date, string $column = 'id', string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this
+            ->count($column)
+            ->from($date, $dateIsoFormat);
+    }
+
+    public function sumFrom(string $date, string $column, string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this
+            ->sum($column)
+            ->from($date, $dateIsoFormat);
+    }
+
+    public function averageFrom(string $date, string $column, string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this
+            ->average($column)
+            ->from($date, $dateIsoFormat);
+    }
+
+    public function maxFrom(string $date, string $column, string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this
+            ->max($column)
+            ->from($date, $dateIsoFormat);
+    }
+
+    public function minFrom(string $date, string $column, string $dateIsoFormat = 'YYYY-MM-DD'): self
+    {
+        return $this
+            ->min($column)
+            ->from($date, $dateIsoFormat);
     }
 
     public function dateColumn(string $column): self

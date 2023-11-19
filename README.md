@@ -73,7 +73,6 @@ LaravelMetrics::query(Post::query())
 LaravelMetrics::query(Post::query()))
     ->count()
     ->between('2020-05-01', '2022-08-21')
-    ->groupByDay()
     ->trends();
 ```
 
@@ -126,6 +125,7 @@ LaravelMetrics::query(...)
     ->byMonth(int $count = 0) // or
     ->byYear(int $count = 0) // or
     ->between(string $startDate, string $endDate, string $dateIsoFormat)
+    ->from(string $date, string $dateIsoFormat)
 ```
 
 **Note :** Periods are defined for the current day, week, month or year by default. However, you can define a specific value using dedicated methods. For example:
@@ -190,6 +190,10 @@ LaravelMetrics::query(...)
     ->countBetween([Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d')])
     ->trends();
 
+LaravelMetrics::query(...)
+    ->averageFrom(Carbon::now()->subDays(10)->format('Y-m-d'))
+    ->trends();
+
 ...
 ```
 
@@ -221,7 +225,12 @@ LaravelMetrics::query(...)
     ->sumBetween(...) //or
     ->averageBetween(...) //or
     ->maxBetween(...) //or
-    ->minBetween(...)
+    ->minBetween(...) //or
+    ->countFrom(...) //or
+    ->sumFrom(...) //or
+    ->averageFrom(...) //or
+    ->maxFrom(...) //or
+    ->minFrom(...)
 ```
 
 ### Fill missing data with default value
@@ -262,6 +271,7 @@ You can group period by days, months, weeks or years when using the ```between``
 ```php
 LaravelMetrics::query(...)
     ->countBetween([Carbon::now()->subDays(10)->format('Y-m-d'), Carbon::now()->format('Y-m-d')])
+    ->groupByMonth()
     ->fillMissingData()
     ->trends();
 ```
