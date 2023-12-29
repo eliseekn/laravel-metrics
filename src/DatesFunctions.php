@@ -55,12 +55,31 @@ trait DatesFunctions
 
     protected function formatPeriod(string $period): string
     {
+        $driver = $this->builder->getConnection()->getDriverName();
+
+        if ($driver === 'mysql') {
+            return match ($period) {
+                Period::DAY->value => "weekday($this->dateColumn)",
+                Period::WEEK->value => "week($this->dateColumn)",
+                Period::MONTH->value => "month($this->dateColumn)",
+                default => "year($this->dateColumn)",
+            };
+        }
+
+        if ($driver === 'pgsql') {
+            return match ($period) {
+                Period::DAY->value => "EXTRACT(DOW FROM $this->dateColumn)",
+                Period::WEEK->value => "EXTRACT(WEEK FROM $this->dateColumn)",
+                Period::MONTH->value => "EXTRACT(MONTH FROM $this->dateColumn)",
+                default => "EXTRACT(YEAR FROM $this->dateColumn)",
+            };
+        }
+
         return match ($period) {
-            Period::DAY->value => "weekday($this->dateColumn)",
-            Period::WEEK->value => "week($this->dateColumn)",
-            Period::MONTH->value => "month($this->dateColumn)",
-            Period::YEAR->value => "year($this->dateColumn)",
-            default => '',
+            Period::DAY->value => "strftime('%w', $this->dateColumn)",
+            Period::WEEK->value => "strftime('%W', $this->dateColumn)",
+            Period::MONTH->value => "strftime('%m', $this->dateColumn)",
+            default => "strftime('%Y', $this->dateColumn)",
         };
     }
 

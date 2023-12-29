@@ -11,7 +11,7 @@ composer require eliseekn/laravel-metrics
 ```
 
 ## Features
-- MySQL support
+- MySQL and PostgreSQL support
 - Verbose query builder
 - Custom columns and table definition
 - Days and months translation with Carbon
@@ -120,11 +120,11 @@ Order::metrics()
 ### Types of periods
 ```php
 LaravelMetrics::query(...)
-    ->byDay(int $count = 0) // or
-    ->byWeek(int $count = 0) // or
-    ->byMonth(int $count = 0) // or
-    ->byYear(int $count = 0) // or
-    ->between(string $startDate, string $endDate, string $dateIsoFormat)
+    ->byDay(int $count = 0) //or
+    ->byWeek(int $count = 0) //or
+    ->byMonth(int $count = 0) //or
+    ->byYear(int $count = 0) //or
+    ->between(string $startDate, string $endDate, string $dateIsoFormat) //or
     ->from(string $date, string $dateIsoFormat)
 ```
 
@@ -158,17 +158,17 @@ LaravelMetrics::query(...)
 ### Types of aggregates
 ```php
 LaravelMetrics::query(...)
-    ->count(string $column = 'id') // or
-    ->average(string $column) // or
-    ->sum(string $column) // or
-    ->max(string $column) // or
+    ->count(string $column = 'id') //or
+    ->average(string $column) //or
+    ->sum(string $column) //or
+    ->max(string $column) //or
     ->min(string $column)
 ```
 
 ### Types of data
 ```php
 LaravelMetrics::query(...)
-    ->trends() // or
+    ->trends() //or
     ->metrics()
 ```
 

@@ -114,6 +114,7 @@ class LaravelMetrics
     {
         return $this->by(Period::YEAR->value, $count);
     }
+
     public function between(string $start, string $end, string $dateIsoFormat = 'YYYY-MM-DD'): self
     {
         $this->checkDateFormat([$start, $end]);

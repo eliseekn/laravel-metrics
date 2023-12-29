@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.8.0
+
+- Add PostgreSQL support
+
 ## 2.7.4
 
 - Add "from" period to set custom startDate end use the current date as endDate for between period
