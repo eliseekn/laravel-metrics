@@ -56,10 +56,12 @@ class LaravelMetrics
 
     protected string $groupBy;
 
+    protected $variation = null;
+
     public function __construct(protected Builder|QueryBuilder $builder)
     {
         $this->table = $this->builder->from;
-        $this->dateColumn = $this->table.'.created_at';
+        $this->dateColumn = $this->table . '.created_at';
         $this->period = null;
         $this->aggregate = Aggregate::COUNT->value;
         $this->year = Carbon::now()->year;
@@ -85,7 +87,7 @@ class LaravelMetrics
     {
         $period = strtolower($period);
 
-        if (! in_array($period, Period::values())) {
+        if (!in_array($period, Period::values())) {
             throw new InvalidPeriodException();
         }
 
@@ -188,12 +190,12 @@ class LaravelMetrics
     {
         $aggregate = strtolower($aggregate);
 
-        if (! in_array($aggregate, Aggregate::values())) {
+        if (!in_array($aggregate, Aggregate::values())) {
             throw new InvalidAggregateException();
         }
 
         $this->aggregate = $aggregate;
-        $this->column = $this->table.'.'.$column;
+        $this->column = $this->table . '.' . $column;
 
         return $this;
     }
@@ -430,14 +432,14 @@ class LaravelMetrics
 
     public function dateColumn(string $column): self
     {
-        $this->dateColumn = $this->table.'.'.$column;
+        $this->dateColumn = $this->table . '.' . $column;
 
         return $this;
     }
 
     public function labelColumn(string $column): self
     {
-        $this->labelColumn = $this->table.'.'.$column;
+        $this->labelColumn = $this->table . '.' . $column;
 
         return $this;
     }
@@ -447,6 +449,35 @@ class LaravelMetrics
         $this->fillMissingData = true;
         $this->missingDataLabels = $missingDataLabels;
         $this->missingDataValue = $missingDataValue;
+
+        return $this;
+    }
+
+    public function withVariation(string $period): self
+    {
+        if (!in_array($period, Period::values())) {
+            throw new InvalidPeriodException();
+        }
+
+        $builder = (new self($this->builder));
+
+        $this->variation = match ($period) {
+            Period::DAY->value => $builder
+                ->forDay(Carbon::now()->subDays($this->count)->day)
+                ->metrics(),
+
+            Period::WEEK->value => $builder
+                ->forWeek(Carbon::now()->subWeeks($this->count)->week)
+                ->metrics(),
+
+            Period::MONTH->value => $builder
+                ->forWeek(Carbon::now()->subMonths($this->count)->month)
+                ->metrics(),
+
+            default => $builder
+                ->forWeek(Carbon::now()->subYears($this->count)->year)
+                ->metrics(),
+        };
 
         return $this;
     }
@@ -518,7 +549,7 @@ class LaravelMetrics
     {
         if (is_array($this->period)) {
             return $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel("date($this->dateColumn)", false))
+                ->selectRaw($this->asData() . ', ' . $this->asLabel("date($this->dateColumn)", false))
                 ->whereBetween(DB::raw("date($this->dateColumn)"), [$this->period[0], $this->period[1]])
                 ->groupBy('label')
                 ->orderBy('label')
@@ -527,7 +558,7 @@ class LaravelMetrics
 
         return match ($this->period) {
             Period::DAY->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::DAY->value))
+                ->selectRaw($this->asData() . ', ' . $this->asLabel(Period::DAY->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
@@ -541,7 +572,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::WEEK->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::WEEK->value))
+                ->selectRaw($this->asData() . ', ' . $this->asLabel(Period::WEEK->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
@@ -555,7 +586,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::MONTH->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::MONTH->value))
+                ->selectRaw($this->asData() . ', ' . $this->asLabel(Period::MONTH->value))
                 ->whereYear($this->dateColumn, $this->year)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
@@ -568,7 +599,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::YEAR->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::YEAR->value))
+                ->selectRaw($this->asData() . ', ' . $this->asLabel(Period::YEAR->value))
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::YEAR->value)), $this->year);
                 })
@@ -582,7 +613,7 @@ class LaravelMetrics
                 ->get(),
 
             default => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel())
+                ->selectRaw($this->asData() . ', ' . $this->asLabel())
                 ->groupBy('label')
                 ->orderBy('label')
                 ->get(),
@@ -597,12 +628,12 @@ class LaravelMetrics
     protected function asLabel(string $label = null, bool $format = true): string
     {
         if (is_null($this->labelColumn)) {
-            $label = ! $format ? $label : $this->formatPeriod($label);
+            $label = !$format ? $label : $this->formatPeriod($label);
         } else {
             $label = $this->labelColumn;
         }
 
-        return $label.' as label';
+        return $label . ' as label';
     }
 
     protected function populateMissingDataForPeriod(array $data): array
@@ -659,8 +690,42 @@ class LaravelMetrics
     public function metrics(): mixed
     {
         $metricsData = $this->metricsData();
-
         return is_null($metricsData) ? 0 : ($metricsData->data ?? 0);
+    }
+
+    /**
+     * Generate metrics data with variation
+     */
+    public function metricsWithVariation(): mixed
+    {
+        $metricsData = $this->metricsData();
+        $count = is_null($metricsData) ? 0 : ($metricsData->data ?? 0);
+
+        if (is_null($this->variation)) {
+            return $count;
+        }
+
+        $result['count'] = $count;
+        $variation = $result['count'] - $this->variation;
+
+        if ($variation > 0) {
+            $result['variation'] = [
+                'type' => 'increment',
+                'by' => ($variation / 100) . '%',
+            ];
+        } elseif ($variation < 0) {
+            $result['variation'] = [
+                'type' => 'decrement',
+                'by' => (abs($variation) / 100) . '%',
+            ];
+        } else {
+            $result['variation'] = [
+                'type' => 'constant',
+                'by' => '0%',
+            ];
+        }
+
+        return $result;
     }
 
     /**
@@ -672,14 +737,14 @@ class LaravelMetrics
             ->trendsData()
             ->toArray();
 
-        $trendsData = array_map(fn ($datum) => (array) $datum, $trendsData);
+        $trendsData = array_map(fn($datum) => (array)$datum, $trendsData);
 
-        if (! $this->fillMissingData) {
+        if (!$this->fillMissingData) {
             $trendsData = $this->formatDate($trendsData);
 
             return $this->formatTrends($trendsData);
         } else {
-            if (! is_null($this->labelColumn)) {
+            if (!is_null($this->labelColumn)) {
                 $trendsData = $this->formatTrends($trendsData);
 
                 return $this->populateMissingData($this->getLabelsData(), $trendsData);
