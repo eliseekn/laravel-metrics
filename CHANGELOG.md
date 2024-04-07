@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.9.0-beta-1
+
+- Add SQLite support
+- Add $missingDataLabels auto discovery
+- Add metrics with variations option
+- Add trends in percents option
+- Fix PostgreSQL support bugs
+
 ## 2.8.0
 
 - Add PostgreSQL support

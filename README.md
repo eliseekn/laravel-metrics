@@ -11,7 +11,7 @@ composer require eliseekn/laravel-metrics
 ```
 
 ## Features
-- MySQL and PostgreSQL support
+- MySQ, PostgreSQL and SQLite support
 - Verbose query builder
 - Custom columns and table definition
 - Days and months translation with Carbon
@@ -128,7 +128,7 @@ LaravelMetrics::query(...)
     ->from(string $date, string $dateIsoFormat)
 ```
 
-**Note :** Periods are defined for the current day, week, month or year by default. However, you can define a specific value using dedicated methods. For example:
+***Note :*** Periods are defined for the current day, week, month or year by default. However, you can define a specific value using dedicated methods. For example:
 
 ```php
 // generate trends of orders count for the current year
@@ -168,9 +168,13 @@ LaravelMetrics::query(...)
 ### Types of data
 ```php
 LaravelMetrics::query(...)
-    ->trends() //or
-    ->metrics()
+    ->trends(bool $inPercent = false) //or
+    ->metrics(?int $withVariationsCount = null)
 ```
+
+***Note 1 :*** The `trends` method can generate data in percentage format when the `$inPercent` parameter is set to `true`. On the other hand, the `metrics` method can generate variations from the past day, week, month, or year based on the period specified. You can use the `$withVariationsCount` to specify the count for past period.
+
+***Note 2 :*** `$withVariationsCount` should only be used on `day`, `week`, `month`, or `year` period.
 
 ### Combining periods and aggregates
 Combining different time periods and data aggregates can enhance your overall experience. For example :
@@ -193,7 +197,6 @@ LaravelMetrics::query(...)
 LaravelMetrics::query(...)
     ->averageFrom(Carbon::now()->subDays(10)->format('Y-m-d'))
     ->trends();
-
 ...
 ```
 
@@ -246,24 +249,10 @@ LaravelMetrics::query(...)
     ->sumByYear(count: 5)
     ->fillMissingData()
     ->trends();
-
 ...
 ```
 
-**Note :** For custom ```labelColumn```definition, you must define a ```missingDataLabel```. For example :
-
-```php
-LaravelMetrics::query(...)
-    ->countByMonth(count: 12)
-    ->forYear(now()->year)
-    ->labelColumn('status')
-    ->fillMissingData(missingDataLabels: [
-        'pending',
-        'delivered',
-        'cancelled'
-    ])
-    ->trends();
-```
+***Note :*** The `fillMissingData` method automatically discovers all labels, ensuring that data is filled for all available labels without the need for explicit label specification.
 
 ### Group period (only when using ```between``` method)
 You can group period by days, months, weeks or years when using the ```between``` method  (***default is day***). For example :

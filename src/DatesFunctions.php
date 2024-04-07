@@ -9,6 +9,7 @@ use Carbon\CarbonPeriod;
 use DateTime;
 use Eliseekn\LaravelMetrics\Enums\Period;
 use Eliseekn\LaravelMetrics\Exceptions\InvalidDateFormatException;
+use Illuminate\Support\Facades\DB;
 
 trait DatesFunctions
 {
@@ -59,7 +60,7 @@ trait DatesFunctions
 
         if ($driver === 'mysql') {
             return match ($period) {
-                Period::DAY->value => "weekday($this->dateColumn)",
+                Period::TODAY->value, Period::DAY->value => "weekday($this->dateColumn)",
                 Period::WEEK->value => "week($this->dateColumn)",
                 Period::MONTH->value => "month($this->dateColumn)",
                 default => "year($this->dateColumn)",
@@ -68,7 +69,7 @@ trait DatesFunctions
 
         if ($driver === 'pgsql') {
             return match ($period) {
-                Period::DAY->value => "EXTRACT(DOW FROM $this->dateColumn)",
+                Period::TODAY->value, Period::DAY->value => "EXTRACT(DOW FROM $this->dateColumn)",
                 Period::WEEK->value => "EXTRACT(WEEK FROM $this->dateColumn)",
                 Period::MONTH->value => "EXTRACT(MONTH FROM $this->dateColumn)",
                 default => "EXTRACT(YEAR FROM $this->dateColumn)",
@@ -76,7 +77,7 @@ trait DatesFunctions
         }
 
         return match ($period) {
-            Period::DAY->value => "strftime('%w', $this->dateColumn)",
+            Period::TODAY->value, Period::DAY->value => "strftime('%w', $this->dateColumn)",
             Period::WEEK->value => "strftime('%W', $this->dateColumn)",
             Period::MONTH->value => "strftime('%m', $this->dateColumn)",
             default => "strftime('%Y', $this->dateColumn)",
@@ -193,7 +194,10 @@ trait DatesFunctions
     {
         $result = [];
 
-        foreach ($this->missingDataLabels as $label) {
+        $labelColumn = explode('.', $this->labelColumn)[1];
+        $missingDataLabels = DB::table($this->builder->from)->get()->pluck($labelColumn)->toArray();
+
+        foreach ($missingDataLabels as $label) {
             $result[$label] = $this->missingDataValue;
         }
 

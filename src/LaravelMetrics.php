@@ -9,6 +9,7 @@ use Eliseekn\LaravelMetrics\Enums\Aggregate;
 use Eliseekn\LaravelMetrics\Enums\Period;
 use Eliseekn\LaravelMetrics\Exceptions\InvalidAggregateException;
 use Eliseekn\LaravelMetrics\Exceptions\InvalidPeriodException;
+use Eliseekn\LaravelMetrics\Exceptions\InvalidVariationsCountException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
@@ -49,8 +50,6 @@ class LaravelMetrics
     protected string $dateIsoFormat = 'YYYY-MM-DD';
 
     protected bool $fillMissingData = false;
-
-    protected ?array $missingDataLabels = null;
 
     protected int $missingDataValue = 0;
 
@@ -442,13 +441,41 @@ class LaravelMetrics
         return $this;
     }
 
-    public function fillMissingData(int $missingDataValue = 0, array $missingDataLabels = null): self
+    public function fillMissingData(int $missingDataValue = 0): self
     {
         $this->fillMissingData = true;
-        $this->missingDataLabels = $missingDataLabels;
         $this->missingDataValue = $missingDataValue;
 
         return $this;
+    }
+
+    protected function withVariations(int $count = 1): int
+    {
+        if (! is_string($this->period) || ! in_array($this->period, Period::values())) {
+            throw new InvalidPeriodException();
+        }
+
+        $laravelMetrics = (new self($this->builder));
+
+        $result = match ($this->period) {
+            Period::DAY->value => $laravelMetrics
+                ->forDay(Carbon::now()->subDays($count)->day)
+                ->metricsData(),
+
+            Period::WEEK->value => $laravelMetrics
+                ->forWeek(Carbon::now()->subWeeks($count)->week)
+                ->metricsData(),
+
+            Period::MONTH->value => $laravelMetrics
+                ->forMonth(Carbon::now()->subMonths($count)->month)
+                ->metricsData(),
+
+            default => $laravelMetrics
+                ->forYear(Carbon::now()->subYears($count)->year)
+                ->metricsData(),
+        };
+
+        return is_null($result) ? 0 : ($result->data ?? 0);
     }
 
     protected function metricsData(): mixed
@@ -466,10 +493,10 @@ class LaravelMetrics
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
-                    return $query->where(DB::raw("day($this->dateColumn)"), $this->day);
+                    return $query->where(DB::raw($this->formatPeriod(Period::TODAY->value)), $this->day);
                 })
                 ->when($this->count > 1, function (Builder|QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw("day($this->dateColumn)"), $this->getDayPeriod());
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::TODAY->value)), $this->getDayPeriod());
                 })
                 ->first(),
 
@@ -531,10 +558,10 @@ class LaravelMetrics
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
-                    return $query->where(DB::raw("day($this->dateColumn)"), $this->day);
+                    return $query->where(DB::raw($this->formatPeriod(Period::TODAY->value)), $this->day);
                 })
                 ->when($this->count > 1, function (Builder|QueryBuilder $query) {
-                    return $query->whereBetween(DB::raw("day($this->dateColumn)"), $this->getDayPeriod());
+                    return $query->whereBetween(DB::raw($this->formatPeriod(Period::TODAY->value)), $this->getDayPeriod());
                 })
                 ->groupBy('label')
                 ->orderBy('label')
@@ -605,7 +632,7 @@ class LaravelMetrics
         return $label.' as label';
     }
 
-    protected function populateMissingDataForPeriod(array $data): array
+    protected function populateMissingDataForPeriod(array $data, bool $inPercent = false): array
     {
         $dates = $this->getCustomPeriod();
         $data = collect($data);
@@ -629,7 +656,7 @@ class LaravelMetrics
 
         $result = $this->formatDate($result);
 
-        return $this->formatTrends($result);
+        return $this->formatTrends($result, $inPercent);
     }
 
     protected function populateMissingData(array $labels, array $data): array
@@ -656,17 +683,47 @@ class LaravelMetrics
     /**
      * Generate metrics data
      */
-    public function metrics(): mixed
+    public function metrics(int $withVariationsCount = null): int|array
     {
         $metricsData = $this->metricsData();
+        $count = is_null($metricsData) ? 0 : ($metricsData->data ?? 0);
 
-        return is_null($metricsData) ? 0 : ($metricsData->data ?? 0);
+        if (is_null($withVariationsCount)) {
+            return $count;
+        }
+
+        if ($withVariationsCount <= 0) {
+            throw new InvalidVariationsCountException();
+        }
+
+        $result['count'] = $count;
+        $result['variation'] = [];
+
+        $data = $count - $this->withVariations($withVariationsCount);
+
+        if ($data > 0) {
+            $result['variation'] = [
+                'type' => 'increment',
+                'value' => $data,
+                'period' => $this->period,
+                'count' => $withVariationsCount,
+            ];
+        } elseif ($data < 0) {
+            $result['variation'] = [
+                'type' => 'decrement',
+                'value' => abs($data),
+                'period' => $this->period,
+                'count' => $withVariationsCount,
+            ];
+        }
+
+        return $result;
     }
 
     /**
      * Generate trends data for charts
      */
-    public function trends(): array
+    public function trends(bool $inPercent = false): array
     {
         $trendsData = $this
             ->trendsData()
@@ -677,22 +734,22 @@ class LaravelMetrics
         if (! $this->fillMissingData) {
             $trendsData = $this->formatDate($trendsData);
 
-            return $this->formatTrends($trendsData);
+            return $this->formatTrends($trendsData, $inPercent);
         } else {
             if (! is_null($this->labelColumn)) {
-                $trendsData = $this->formatTrends($trendsData);
+                $trendsData = $this->formatTrends($trendsData, $inPercent);
 
                 return $this->populateMissingData($this->getLabelsData(), $trendsData);
             }
 
             if (is_array($this->period)) {
-                return $this->populateMissingDataForPeriod($trendsData);
+                return $this->populateMissingDataForPeriod($trendsData, $inPercent);
             }
 
             if (is_string($this->period)) {
                 $trendsData = $this->formatDate($trendsData);
 
-                return $this->populateMissingData($this->getPeriod(), $this->formatTrends($trendsData));
+                return $this->populateMissingData($this->getPeriod(), $this->formatTrends($trendsData, $inPercent));
             }
         }
 
@@ -702,8 +759,9 @@ class LaravelMetrics
         ];
     }
 
-    protected function formatTrends(array $data): array
+    protected function formatTrends(array $data, bool $inPercent = false): array
     {
+        $total = 0;
         $result = [
             'labels' => [],
             'data' => [],
@@ -712,7 +770,20 @@ class LaravelMetrics
         foreach ($data as $datum) {
             $result['labels'][] = $datum['label'];
             $result['data'][] = $datum['data'];
+            $total += $datum['data'];
         }
+
+        if (! $inPercent) {
+            return $result;
+        }
+
+        $percentData = [];
+
+        foreach ($result['data'] as $item) {
+            $percentData[] = round(($item / $total) * 100, 2);
+        }
+
+        $result['data'] = $percentData;
 
         return $result;
     }

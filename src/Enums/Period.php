@@ -6,6 +6,7 @@ namespace Eliseekn\LaravelMetrics\Enums;
 
 enum Period: string
 {
+    case TODAY = 'today';
     case DAY = 'day';
     case WEEK = 'week';
     case MONTH = 'month';
