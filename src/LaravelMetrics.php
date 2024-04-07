@@ -455,7 +455,9 @@ class LaravelMetrics
             throw new InvalidPeriodException();
         }
 
-        $laravelMetrics = (new self($this->builder));
+        $laravelMetrics = (new self(DB::table($this->table)))
+            ->by($this->period, $count)
+            ->aggregate($this->aggregate, str_replace($this->table . '.', '', $this->column));
 
         $result = match ($this->period) {
             Period::DAY->value => $laravelMetrics
