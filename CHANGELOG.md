@@ -2,6 +2,11 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.9.2-beta-2
+
+- Add metricsWithVariations method
+- Fix some bugs
+
 ## 2.9.0-beta-1
 
 - Add SQLite support

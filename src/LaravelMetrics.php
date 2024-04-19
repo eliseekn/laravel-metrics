@@ -449,37 +449,6 @@ class LaravelMetrics
         return $this;
     }
 
-    protected function withVariations(int $count = 1): int
-    {
-        if (! is_string($this->period) || ! in_array($this->period, Period::values())) {
-            throw new InvalidPeriodException();
-        }
-
-        $laravelMetrics = (new self(DB::table($this->table)))
-            ->by($this->period, $count)
-            ->aggregate($this->aggregate, str_replace($this->table.'.', '', $this->column));
-
-        $result = match ($this->period) {
-            Period::DAY->value => $laravelMetrics
-                ->forDay(Carbon::now()->subDays($count)->day)
-                ->metricsData(),
-
-            Period::WEEK->value => $laravelMetrics
-                ->forWeek(Carbon::now()->subWeeks($count)->week)
-                ->metricsData(),
-
-            Period::MONTH->value => $laravelMetrics
-                ->forMonth(Carbon::now()->subMonths($count)->month)
-                ->metricsData(),
-
-            default => $laravelMetrics
-                ->forYear(Carbon::now()->subYears($count)->year)
-                ->metricsData(),
-        };
-
-        return is_null($result) ? 0 : ($result->data ?? 0);
-    }
-
     protected function metricsData(): mixed
     {
         if (is_array($this->period)) {
@@ -685,37 +654,66 @@ class LaravelMetrics
     /**
      * Generate metrics data
      */
-    public function metrics(int $withVariationsCount = null): mixed
+    public function metrics(): mixed
     {
         $metricsData = $this->metricsData();
-        $count = is_null($metricsData) ? 0 : ($metricsData->data ?? 0);
 
-        if (is_null($withVariationsCount)) {
-            return $count;
+        return is_null($metricsData) ? 0 : ($metricsData->data ?? 0);
+    }
+
+    /**
+     * Generate metrics data with variations
+     */
+    public function metricsWithVariations(int $previousCount, string $previousPeriod, bool $inPercent = false): array
+    {
+        if (! in_array($previousPeriod, Period::values())) {
+            throw new InvalidPeriodException();
         }
 
-        if ($withVariationsCount <= 0) {
+        if ($previousCount <= 0) {
             throw new InvalidVariationsCountException();
         }
 
-        $result['count'] = $count;
+        $laravelMetrics = (new self(DB::table($this->table)))
+            ->by($previousPeriod, $previousCount)
+            ->aggregate($this->aggregate, str_replace($this->table.'.', '', $this->column));
+
+        $variations = match ($previousPeriod) {
+            Period::DAY->value => $laravelMetrics
+                ->forDay(Carbon::now()->subDays($previousCount)->day)
+                ->metrics(),
+
+            Period::WEEK->value => $laravelMetrics
+                ->forWeek(Carbon::now()->subWeeks($previousCount)->week)
+                ->metrics(),
+
+            Period::MONTH->value => $laravelMetrics
+                ->forMonth(Carbon::now()->subMonths($previousCount)->month)
+                ->metrics(),
+
+            default => $laravelMetrics
+                ->forYear(Carbon::now()->subYears($previousCount)->year)
+                ->metrics(),
+        };
+
+        $result['count'] = $this->metrics();
         $result['variation'] = [];
 
-        $data = $count - $this->withVariations($withVariationsCount);
+        $value = $result['count'] - $variations;
 
-        if ($data > 0) {
+        if ($inPercent && $variations > 0) {
+            $value = (abs($value) / $variations) * 100 .'%';
+        }
+
+        if ($value > 0) {
             $result['variation'] = [
-                'type' => 'increment',
-                'value' => $data,
-                'period' => $this->period,
-                'count' => $withVariationsCount,
+                'type' => 'increase',
+                'value' => $value,
             ];
-        } elseif ($data < 0) {
+        } elseif ($value < 0) {
             $result['variation'] = [
-                'type' => 'decrement',
-                'value' => abs($data),
-                'period' => $this->period,
-                'count' => $withVariationsCount,
+                'type' => 'decrease',
+                'value' => $value,
             ];
         }
 
