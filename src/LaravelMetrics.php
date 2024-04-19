@@ -457,7 +457,7 @@ class LaravelMetrics
 
         $laravelMetrics = (new self(DB::table($this->table)))
             ->by($this->period, $count)
-            ->aggregate($this->aggregate, str_replace($this->table . '.', '', $this->column));
+            ->aggregate($this->aggregate, str_replace($this->table.'.', '', $this->column));
 
         $result = match ($this->period) {
             Period::DAY->value => $laravelMetrics
@@ -685,7 +685,7 @@ class LaravelMetrics
     /**
      * Generate metrics data
      */
-    public function metrics(int $withVariationsCount = null): int|array
+    public function metrics(int $withVariationsCount = null): mixed
     {
         $metricsData = $this->metricsData();
         $count = is_null($metricsData) ? 0 : ($metricsData->data ?? 0);
