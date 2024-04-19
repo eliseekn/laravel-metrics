@@ -169,12 +169,13 @@ LaravelMetrics::query(...)
 ```php
 LaravelMetrics::query(...)
     ->trends(bool $inPercent = false) //or
-    ->metrics(?int $withVariationsCount = null)
+    ->metrics() //or
+    ->metricsWithVariations(int $previousCount, string $previousPeriod, bool $inPercent = false)
 ```
 
-***Note 1 :*** The `trends` method can generate data in percentage format when the `$inPercent` parameter is set to `true`. On the other hand, the `metrics` method can generate variations from the past day, week, month, or year based on the period specified. You can use the `$withVariationsCount` to specify the count for past period.
+***Note 1 :*** The `trends` method can generate data in percentage format when the `$inPercent` parameter is set to `true`.
 
-***Note 2 :*** `$withVariationsCount` should only be used on `day`, `week`, `month`, or `year` period.
+***Note 2 :*** The `metricsWithVariations` method generates metrics with variations from the `$previousPeriod` period (`day`, `week`, `month`, or `year`). The `$previousCount` parameter specifies the count for the past period. Set `$inPercent` parameter to true to get variations result in percent.
 
 ### Combining periods and aggregates
 Combining different time periods and data aggregates can enhance your overall experience. For example :
