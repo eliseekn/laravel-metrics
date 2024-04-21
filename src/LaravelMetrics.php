@@ -454,7 +454,7 @@ class LaravelMetrics
         if (is_array($this->period)) {
             return $this->builder
                 ->selectRaw($this->asData())
-                ->whereBetween(DB::raw("date($this->dateColumn)"), [$this->period[0], $this->period[1]])
+                ->whereBetween(DB::raw($this->formatDateColumn()), [$this->period[0], $this->period[1]])
                 ->first();
         }
 
@@ -516,8 +516,8 @@ class LaravelMetrics
     {
         if (is_array($this->period)) {
             return $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel("date($this->dateColumn)", false))
-                ->whereBetween(DB::raw("date($this->dateColumn)"), [$this->period[0], $this->period[1]])
+                ->selectRaw($this->asData().', '.$this->asLabel($this->formatDateColumn(), false))
+                ->whereBetween(DB::raw($this->formatDateColumn()), [$this->period[0], $this->period[1]])
                 ->groupBy('label')
                 ->orderBy('label')
                 ->get();
@@ -713,7 +713,7 @@ class LaravelMetrics
         } elseif ($value < 0) {
             $result['variation'] = [
                 'type' => 'decrease',
-                'value' => $value,
+                'value' => abs($value),
             ];
         }
 

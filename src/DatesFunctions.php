@@ -84,6 +84,17 @@ trait DatesFunctions
         };
     }
 
+    protected function formatDateColumn(): string
+    {
+        $driver = $this->builder->getConnection()->getDriverName();
+
+        return match ($driver) {
+            'mysql' => "date($this->dateColumn)",
+            'pgsql' => "TO_CHAR($this->dateColumn, 'YYYY-MM-DD')",
+            'default' => "strftime('%Y-%m-%d', $this->dateColumn)",
+        };
+    }
+
     protected function formatDate(array $data): array
     {
         return array_map(function ($datum) {

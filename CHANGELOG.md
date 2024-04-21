@@ -2,6 +2,11 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 2.9.3
+
+- Fix date function by database driver
+- Fix metrics negative variation value display 
+
 ## 2.9.2
 
 - Rebase branch 2.9.0-beta-1 onto 2.x
