@@ -47,12 +47,13 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/theseer/tokenizer" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/voku/portable-ascii" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/psr/clock" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/symfony/deprecation-contracts" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/brick/math" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/illuminate/container" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/illuminate/database" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/laravel/pint" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/carbonphp/carbon-doctrine-types" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/symfony/clock" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/symfony/polyfill-php83" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
