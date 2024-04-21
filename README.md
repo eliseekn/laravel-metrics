@@ -5,6 +5,12 @@
 
 Generate easily metrics and trends data of your models for your dashboards.
 
+## Requirements
+```bash
+PHP ^8.2.x
+Laravel ^11.x 
+```
+
 ## Installation
 ```bash
 composer require eliseekn/laravel-metrics

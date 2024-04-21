@@ -2,6 +2,11 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
+## 3.0.0
+
+- Migrate to PHP 8.2
+- Add Laravel 11.x support
+
 ## 2.9.2
 
 - Rebase branch 2.9.0-beta-1 onto 2.x
