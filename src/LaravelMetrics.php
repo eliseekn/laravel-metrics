@@ -713,7 +713,7 @@ class LaravelMetrics
         } elseif ($value < 0) {
             $result['variation'] = [
                 'type' => 'decrease',
-                'value' => $value,
+                'value' => abs($value),
             ];
         }
 

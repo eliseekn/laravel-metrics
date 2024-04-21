@@ -91,7 +91,7 @@ trait DatesFunctions
         return match ($driver) {
             'mysql' => "date($this->dateColumn)",
             'pgsql' => "TO_CHAR($this->dateColumn, 'YYYY-MM-DD')",
-            'default' => "strftime('%Y-%m-%d', $this->dateColumn)",
+            default => "strftime('%Y-%m-%d', $this->dateColumn)",
         };
     }
 
