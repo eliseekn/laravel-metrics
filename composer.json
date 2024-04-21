@@ -23,7 +23,7 @@
         "php": "^8.2",
         "illuminate/database": "^11.4",
         "illuminate/support": "^11.4",
-        "nesbot/carbon": "^2.72.3"
+        "nesbot/carbon": "^3.3.0"
     },
     "require-dev": {
         "laravel/pint": "^1.15.1",
