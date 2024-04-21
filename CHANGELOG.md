@@ -2,8 +2,9 @@
 
 All notable changes to `laravel-metrics` will be documented in this file
 
-## 3.0.0
+## 3.0.0-beta-1
 
+- Feat #13
 - Migrate to PHP 8.2
 - Add Laravel 11.x support
 
