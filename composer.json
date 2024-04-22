@@ -25,6 +25,10 @@
         "illuminate/support": "^11.4",
         "nesbot/carbon": "^3.3"
     },
+    "require-dev": {
+        "laravel/pint": "^1.15",
+        "phpunit/phpunit": "^11.1"
+    },
     "autoload": {
         "psr-4": {
             "Eliseekn\\LaravelMetrics\\": "src"
@@ -47,9 +51,5 @@
                 "LaravelMetrics": "Eliseekn\\LaravelMetrics\\LaravelMetricsFacade"
             }
         }
-    },
-    "require-dev": {
-        "laravel/pint": "^1.15",
-        "phpunit/phpunit": "^11.1"
     }
 }
