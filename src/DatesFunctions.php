@@ -91,7 +91,7 @@ trait DatesFunctions
         return match ($driver) {
             'mysql' => "date($this->dateColumn)",
             'pgsql' => "TO_CHAR($this->dateColumn, 'YYYY-MM-DD')",
-            'default' => "strftime('%Y-%m-%d', $this->dateColumn)",
+            default => "strftime('%Y-%m-%d', $this->dateColumn)",
         };
     }
 
@@ -206,7 +206,7 @@ trait DatesFunctions
         $result = [];
 
         $labelColumn = explode('.', $this->labelColumn)[1];
-        $missingDataLabels = DB::table($this->builder->from)->get()->pluck($labelColumn)->toArray();
+        $missingDataLabels = DB::table($this->table)->get()->pluck($labelColumn)->toArray();
 
         foreach ($missingDataLabels as $label) {
             $result[$label] = $this->missingDataValue;
