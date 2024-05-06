@@ -53,6 +53,8 @@ class LaravelMetrics
 
     protected int $missingDataValue = 0;
 
+    protected array $missingDataLabels = [];
+
     protected string $groupBy;
 
     public function __construct(protected Builder|QueryBuilder $builder)
@@ -441,10 +443,11 @@ class LaravelMetrics
         return $this;
     }
 
-    public function fillMissingData(int $missingDataValue = 0): self
+    public function fillMissingData(int $missingDataValue = 0, array $missingDataLabels = []): self
     {
         $this->fillMissingData = true;
         $this->missingDataValue = $missingDataValue;
+        $this->missingDataLabels = $missingDataLabels;
 
         return $this;
     }

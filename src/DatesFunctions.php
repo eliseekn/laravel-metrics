@@ -206,7 +206,10 @@ trait DatesFunctions
         $result = [];
 
         $labelColumn = explode('.', $this->labelColumn)[1];
-        $missingDataLabels = DB::table($this->table)->get()->pluck($labelColumn)->toArray();
+
+        $missingDataLabels = empty($this->missingDataLabels)
+            ? DB::table($this->table)->get()->pluck($labelColumn)->toArray()
+            : $this->missingDataLabels;
 
         foreach ($missingDataLabels as $label) {
             $result[$label] = $this->missingDataValue;
