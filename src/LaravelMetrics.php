@@ -51,6 +51,8 @@ class LaravelMetrics
 
     protected bool $fillMissingData = false;
 
+    protected array $missingDataLabels = [];
+
     protected int $missingDataValue = 0;
 
     protected string $groupBy;
@@ -441,10 +443,11 @@ class LaravelMetrics
         return $this;
     }
 
-    public function fillMissingData(int $missingDataValue = 0): self
+    public function fillMissingData(int $missingDataValue = 0, array $missingDataLabels = []): self
     {
         $this->fillMissingData = true;
         $this->missingDataValue = $missingDataValue;
+        $this->missingDataLabels = $missingDataLabels;
 
         return $this;
     }
@@ -592,7 +595,7 @@ class LaravelMetrics
         return "$this->aggregate($this->column) as data";
     }
 
-    protected function asLabel(string $label = null, bool $format = true): string
+    protected function asLabel(?string $label = null, bool $format = true): string
     {
         if (is_null($this->labelColumn)) {
             $label = ! $format ? $label : $this->formatPeriod($label);
