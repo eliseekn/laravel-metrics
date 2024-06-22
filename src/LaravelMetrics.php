@@ -51,11 +51,15 @@ class LaravelMetrics
 
     protected bool $fillMissingData = false;
 
-    protected int $missingDataValue = 0;
-
     protected array $missingDataLabels = [];
 
+    protected int $missingDataValue = 0;
+
     protected string $groupBy;
+
+    protected string $groupedData = '';
+
+    protected array $groupedDataLabels = [];
 
     public function __construct(protected Builder|QueryBuilder $builder)
     {
@@ -519,7 +523,7 @@ class LaravelMetrics
     {
         if (is_array($this->period)) {
             return $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel($this->formatDateColumn(), false))
+                ->selectRaw($this->asData().', '.$this->asLabel($this->formatDateColumn(), false).$this->groupedData)
                 ->whereBetween(DB::raw($this->formatDateColumn()), [$this->period[0], $this->period[1]])
                 ->groupBy('label')
                 ->orderBy('label')
@@ -528,7 +532,7 @@ class LaravelMetrics
 
         return match ($this->period) {
             Period::DAY->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::DAY->value))
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::DAY->value).$this->groupedData)
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
@@ -542,7 +546,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::WEEK->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::WEEK->value))
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::WEEK->value).$this->groupedData)
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
@@ -556,7 +560,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::MONTH->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::MONTH->value))
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::MONTH->value).$this->groupedData)
                 ->whereYear($this->dateColumn, $this->year)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
@@ -569,7 +573,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::YEAR->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::YEAR->value))
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::YEAR->value).$this->groupedData)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::YEAR->value)), $this->year);
                 })
@@ -583,16 +587,30 @@ class LaravelMetrics
                 ->get(),
 
             default => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel())
+                ->selectRaw($this->asData().', '.$this->asLabel().$this->groupedData)
                 ->groupBy('label')
                 ->orderBy('label')
                 ->get(),
         };
     }
 
-    protected function asData(): string
+    public function groupData(array $dataLabels, string $aggregate): self
     {
-        return "$this->aggregate($this->column) as data";
+        $this->groupedDataLabels = $dataLabels;
+        $result = [];
+
+        foreach ($dataLabels as $key => $value) {
+            $result[] = $aggregate.'('.$this->column.' = "'.$value.'")'." as data$key";
+        }
+
+        $this->groupedData = ', '.implode(', ', $result);
+
+        return $this;
+    }
+
+    protected function asData(string $name = 'data'): string
+    {
+        return "$this->aggregate($this->column) as $name";
     }
 
     protected function asLabel(string $label = null, bool $format = true): string
@@ -606,7 +624,7 @@ class LaravelMetrics
         return $label.' as label';
     }
 
-    protected function populateMissingDataForPeriod(array $data, bool $inPercent = false): array
+    protected function populateMissingDataForPeriod(array $data, bool $inPercent = false, string $dataLabel = 'data'): array
     {
         $dates = $this->getCustomPeriod();
         $data = collect($data);
@@ -618,7 +636,7 @@ class LaravelMetrics
             if ($dataForDate) {
                 $result[] = [
                     'label' => $dataForDate['label'],
-                    'data' => $dataForDate['data'],
+                    'data' => (int) $dataForDate[$dataLabel],
                 ];
             } else {
                 $result[] = [
@@ -723,6 +741,64 @@ class LaravelMetrics
         return $result;
     }
 
+    protected function trendsWithMergedData(bool $inPercent = false): array
+    {
+        $result = [];
+
+        $trendsData = $this
+            ->trendsData()
+            ->toArray();
+
+        $trendsData = array_map(fn ($datum) => (array) $datum, $trendsData);
+        $data = [$this->getFormattedTrendsData($trendsData, $inPercent)];
+
+        foreach ($this->groupedDataLabels as $key => $value) {
+            $data[] = $this->getFormattedTrendsData($trendsData, $inPercent, "data$key");
+        }
+
+        foreach ($data as $key => $value) {
+            $result['labels'] = $value['labels'];
+
+            if ($key === 0) {
+                $result['data']['total'] = $value['data'];
+            } else {
+                $result['data'][$this->groupedDataLabels[$key - 1]] = $value['data'];
+            }
+        }
+
+        return $result;
+    }
+
+    protected function getFormattedTrendsData(array $trendsData, bool $inPercent = false, string $dataLabel = 'data'): array
+    {
+        if (! $this->fillMissingData) {
+            $trendsData = $this->formatDate($trendsData);
+
+            return $this->formatTrends($trendsData, $inPercent, $dataLabel);
+        } else {
+            if (! is_null($this->labelColumn)) {
+                $trendsData = $this->formatTrends($trendsData, $inPercent, $dataLabel);
+
+                return $this->populateMissingData($this->getLabelsData(), $trendsData);
+            }
+
+            if (is_array($this->period)) {
+                return $this->populateMissingDataForPeriod($trendsData, $inPercent, $dataLabel);
+            }
+
+            if (is_string($this->period)) {
+                $trendsData = $this->formatDate($trendsData);
+
+                return $this->populateMissingData($this->getPeriod(), $this->formatTrends($trendsData, $inPercent, $dataLabel));
+            }
+        }
+
+        return [
+            'labels' => [],
+            'data' => [],
+        ];
+    }
+
     /**
      * Generate trends data for charts
      */
@@ -734,37 +810,17 @@ class LaravelMetrics
 
         $trendsData = array_map(fn ($datum) => (array) $datum, $trendsData);
 
-        if (! $this->fillMissingData) {
-            $trendsData = $this->formatDate($trendsData);
-
-            return $this->formatTrends($trendsData, $inPercent);
-        } else {
-            if (! is_null($this->labelColumn)) {
-                $trendsData = $this->formatTrends($trendsData, $inPercent);
-
-                return $this->populateMissingData($this->getLabelsData(), $trendsData);
-            }
-
-            if (is_array($this->period)) {
-                return $this->populateMissingDataForPeriod($trendsData, $inPercent);
-            }
-
-            if (is_string($this->period)) {
-                $trendsData = $this->formatDate($trendsData);
-
-                return $this->populateMissingData($this->getPeriod(), $this->formatTrends($trendsData, $inPercent));
-            }
+        if (! empty($this->groupedDataLabels)) {
+            return $this->trendsWithMergedData($inPercent);
         }
 
-        return [
-            'labels' => [],
-            'data' => [],
-        ];
+        return $this->getFormattedTrendsData($trendsData, $inPercent);
     }
 
-    protected function formatTrends(array $data, bool $inPercent = false): array
+    protected function formatTrends(array $data, bool $inPercent = false, string $dataLabel = 'data'): array
     {
         $total = 0;
+
         $result = [
             'labels' => [],
             'data' => [],
@@ -772,8 +828,8 @@ class LaravelMetrics
 
         foreach ($data as $datum) {
             $result['labels'][] = $datum['label'];
-            $result['data'][] = $datum['data'];
-            $total += $datum['data'];
+            $result['data'][] = (int) $datum[$dataLabel];
+            $total += $datum[$dataLabel];
         }
 
         if (! $inPercent) {
@@ -796,3 +852,4 @@ class LaravelMetrics
         return Config::get('app.locale');
     }
 }
+

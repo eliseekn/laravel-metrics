@@ -280,6 +280,19 @@ LaravelMetrics::query(...)
     ->groupByDay()
 ```
 
+### Group data (only for ```trends```)
+You can group data of a column with multiple values to use it in a dataset for your charts. For example :
+
+```php
+Order::metrics()
+    ->countByMonth(column: 'status')
+    ->groupData(['pending', 'delivered', 'cancelled'], Aggregate::SUM->value)
+    ->fillMissingData()
+    ->trends();
+```
+
+***Note :*** Follow same order in the example to avoid false data.
+
 ## Translations
 
 Days and months names are automatically translated using `config(app.locale)` except 'week' period.
