@@ -21,9 +21,9 @@
     "minimum-stability": "stable",
     "require": {
         "php": "^8.2",
-        "illuminate/database": "^11.4",
-        "illuminate/support": "^11.4",
-        "nesbot/carbon": "^3.3"
+        "illuminate/database": "^11.4 || ^12",
+        "illuminate/support": "^11.4 || ^12",
+        "nesbot/carbon": "^3.8"
     },
     "require-dev": {
         "laravel/pint": "^1.15",
