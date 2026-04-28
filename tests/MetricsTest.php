@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Eliseekn\LaravelMetrics\Tests;
 
+use Carbon\Carbon;
 use Eliseekn\LaravelMetrics\LaravelMetrics;
 
 class MetricsTest extends TestCase
@@ -91,7 +92,7 @@ class MetricsTest extends TestCase
     {
         // getDayPeriod() for the current month uses $this->day as upper bound.
         // Use today's date so the current-month branch is taken.
-        $today = \Carbon\Carbon::now();
+        $today = Carbon::now();
         $year = $today->year;
         $month = $today->month;
         $day = $today->day;
@@ -270,7 +271,7 @@ class MetricsTest extends TestCase
 
         $result = LaravelMetrics::query($this->db())
             ->count()
-            ->byToday()
+            ->byDay(1)
             ->metrics();
 
         $this->assertEquals(2, $result);
