@@ -6,17 +6,20 @@
 Generate easily metrics and trends data of your models for your dashboards.
 
 ## Requirements
+
 ```bash
 PHP ^8.2.x
-Laravel ^11.x 
+Laravel ^11.x
 ```
 
 ## Installation
+
 ```bash
 composer require eliseekn/laravel-metrics
 ```
 
 ## Features
+
 - MySQ, PostgreSQL and SQLite support
 - Verbose query builder
 - Custom columns and table definition
@@ -27,6 +30,7 @@ composer require eliseekn/laravel-metrics
 ### With Eloquent Query
 
 Import the `Eliseekn\LaravelMetrics\LaravelMetrics` class in your controller and use it as follows :
+
 - Basic usage
 
 ```php
@@ -46,7 +50,7 @@ LaravelMetrics::query(Order::query())
 LaravelMetrics::query(Order::query())
     ->sum('amount')
     ->byYear()
-    ->metrics(); 
+    ->metrics();
 
 // generate total product count for the current day
 LaravelMetrics::query(Product::query())
@@ -56,6 +60,7 @@ LaravelMetrics::query(Product::query())
 ```
 
 - Using custom query
+
 ```php
 LaravelMetrics::query(
     Post::query()->where('user_id', auth()->id())
@@ -66,6 +71,7 @@ LaravelMetrics::query(
 ```
 
 - Using custom date column
+
 ```php
 LaravelMetrics::query(Post::query())
     ->count()
@@ -75,6 +81,7 @@ LaravelMetrics::query(Post::query())
 ```
 
 - Using date range
+
 ```php
 LaravelMetrics::query(Post::query()))
     ->count()
@@ -83,6 +90,7 @@ LaravelMetrics::query(Post::query()))
 ```
 
 - Using custom label column
+
 ```php
 LaravelMetrics::query(Order::query())
     ->count()
@@ -92,6 +100,7 @@ LaravelMetrics::query(Order::query())
 ```
 
 - Using custom table
+
 ```php
 LaravelMetrics::query(
     Order::query()->join('users', 'orders.id', 'users.order_id')
@@ -103,6 +112,7 @@ LaravelMetrics::query(
 ```
 
 ### With Query Builder
+
 ```php
 LaravelMetrics::query(
     DB::table('orders')
@@ -112,7 +122,7 @@ LaravelMetrics::query(
     ->trends();
 ```
 
-### With traits 
+### With traits
 
 Add `HasMetrics` trait to your models and use it as follows :
 
@@ -124,6 +134,7 @@ Order::metrics()
 ```
 
 ### Types of periods
+
 ```php
 LaravelMetrics::query(...)
     ->byDay(int $count = 0) //or
@@ -134,7 +145,7 @@ LaravelMetrics::query(...)
     ->from(string $date, string $dateIsoFormat)
 ```
 
-***Note :*** Periods are defined for the current day, week, month or year by default. However, you can define a specific value using dedicated methods. For example:
+**_Note :_** Periods are defined for the current day, week, month or year by default. However, you can define a specific value using dedicated methods. For example:
 
 ```php
 // generate trends of orders count for the current year
@@ -162,6 +173,7 @@ LaravelMetrics::query(...)
 ```
 
 ### Types of aggregates
+
 ```php
 LaravelMetrics::query(...)
     ->count(string $column = 'id') //or
@@ -172,6 +184,7 @@ LaravelMetrics::query(...)
 ```
 
 ### Types of data
+
 ```php
 LaravelMetrics::query(...)
     ->trends(bool $inPercent = false) //or
@@ -179,11 +192,12 @@ LaravelMetrics::query(...)
     ->metricsWithVariations(int $previousCount, string $previousPeriod, bool $inPercent = false)
 ```
 
-***Note 1 :*** The `trends` method can generate data in percentage format when the `$inPercent` parameter is set to `true`.
+**_Note 1 :_** The `trends` method can generate data in percentage format when the `$inPercent` parameter is set to `true`.
 
-***Note 2 :*** The `metricsWithVariations` method generates metrics with variations from the `$previousPeriod` period (`day`, `week`, `month`, or `year`). The `$previousCount` parameter specifies the count for the past period. Set `$inPercent` parameter to true to get variations result in percent.
+**_Note 2 :_** The `metricsWithVariations` method generates metrics with variations from the `$previousPeriod` period (`day`, `week`, `month`, or `year`). The `$previousCount` parameter specifies the count for the past period. Set `$inPercent` parameter to true to get variations result in percent.
 
 ### Combining periods and aggregates
+
 Combining different time periods and data aggregates can enhance your overall experience. For example :
 
 ```php
@@ -244,7 +258,8 @@ LaravelMetrics::query(...)
 ```
 
 ### Fill missing data with default value
-You can fill missing data with default value with the global method ```fillMissingData```, especially for trends. For example :
+
+You can fill missing data with default value with the global method `fillMissingData`, especially for trends. For example :
 
 ```php
 LaravelMetrics::query(...)
@@ -259,10 +274,11 @@ LaravelMetrics::query(...)
 ...
 ```
 
-***Note :*** The `fillMissingData` method automatically discovers all labels, ensuring that data is filled for all available labels without the need for explicit label specification.
+**_Note :_** The `fillMissingData` method automatically discovers all labels, ensuring that data is filled for all available labels without the need for explicit label specification.
 
-### Group period (only when using ```between``` method)
-You can group period by days, months, weeks or years when using the ```between``` method  (***default is day***). For example :
+### Group period (only when using `between` method)
+
+You can group period by days, months, weeks or years when using the `between` method (**_default is day_**). For example :
 
 ```php
 LaravelMetrics::query(...)
@@ -280,7 +296,8 @@ LaravelMetrics::query(...)
     ->groupByDay()
 ```
 
-### Group data (only for ```trends```)
+### Group data (only for `trends`)
+
 You can group data of a column with multiple values to use it in a dataset for your charts. For example :
 
 ```php
@@ -291,7 +308,7 @@ Order::metrics()
     ->trends();
 ```
 
-***Note :*** Follow same order in the example to avoid false data.
+**_Note :_** Follow same order in the example to avoid false data.
 
 ## Translations
 
@@ -311,8 +328,9 @@ If you discover any security related issues, please email `eliseekn@gmail.com` i
 
 ## Credits
 
--   [N'Guessan Kouadio Elisée](https://github.com/eliseekn)
--   [Chris Brown](https://github.com/drbyte)
+- [N'Guessan Kouadio Elisée](https://github.com/eliseekn)
+- [Chris Brown](https://github.com/drbyte)
+- [Davey Shafik](https://github.com/dshafik)
 
 ## License
 
