@@ -79,10 +79,10 @@ trait DatesFunctions
         }
 
         return match ($period) {
-            Period::TODAY->value, Period::DAY->value => "strftime('%d', $this->dateColumn)",
-            Period::WEEK->value => "strftime('%W', $this->dateColumn)",
-            Period::MONTH->value => "strftime('%m', $this->dateColumn)",
-            Period::YEAR->value => "strftime('%Y', $this->dateColumn)",
+            Period::TODAY->value, Period::DAY->value => "CAST(strftime('%d', $this->dateColumn) AS INTEGER)",
+            Period::WEEK->value => "CAST(strftime('%W', $this->dateColumn) AS INTEGER)",
+            Period::MONTH->value => "CAST(strftime('%m', $this->dateColumn) AS INTEGER)",
+            Period::YEAR->value => "CAST(strftime('%Y', $this->dateColumn) AS INTEGER)",
             default => $this->dateColumn,
         };
     }
@@ -106,9 +106,9 @@ trait DatesFunctions
             }
 
             if ($this->period === Period::MONTH->value) {
-                $datum['label'] = Carbon::parse($this->year.'-'.$datum['label'])->locale(self::locale())->monthName;
+                $datum['label'] = Carbon::parse(sprintf('%04d-%02d', $this->year, (int) $datum['label']))->locale(self::locale())->monthName;
             } elseif ($this->period === Period::DAY->value) {
-                $datum['label'] = Carbon::parse($this->year.'-'.$this->month.'-'.$datum['label'])->locale(self::locale())->dayName;
+                $datum['label'] = Carbon::parse(sprintf('%04d-%02d-%02d', $this->year, $this->month, (int) $datum['label']))->locale(self::locale())->dayName;
             } elseif ($this->period === Period::WEEK->value) {
                 $datum['label'] = 'Week '.$datum['label'];
             } elseif ($this->period === Period::YEAR->value) {
@@ -136,12 +136,17 @@ trait DatesFunctions
     {
         $result = [];
 
+        $endDate = $this->year < Carbon::now()->year
+            ? $this->carbon()->endOfYear()->format('Y-m-d')
+            : $this->carbon()->format('Y-m-d');
+
         $dates = collect(
-            CarbonPeriod::between(
+            new CarbonPeriod(
                 $this->carbon()->startOfYear()->format('Y-m-d'),
-                $this->carbon()->format('Y-m-d')
-            )->interval('1 month'))
-            ->map(fn ($date) => Carbon::parse($date)->locale(self::locale())->monthName)->toArray();
+                '1 month',
+                $endDate
+            ))
+            ->map(fn (Carbon $date) => $date->locale(self::locale())->monthName)->toArray();
 
         foreach ($dates as $date) {
             $result[$date] = $this->missingDataValue;
@@ -155,11 +160,12 @@ trait DatesFunctions
         $result = [];
 
         $dates = collect(
-            CarbonPeriod::between(
+            new CarbonPeriod(
                 $this->carbon()->startOfWeek()->format('Y-m-d'),
+                '1 day',
                 $this->carbon()->format('Y-m-d')
-            )->interval('1 day'))
-            ->map(fn ($date) => Carbon::parse($date)->locale(self::locale())->dayName)->toArray();
+            ))
+            ->map(fn (Carbon $date) => $date->locale(self::locale())->dayName)->toArray();
 
         foreach ($dates as $date) {
             $result[$date] = $this->missingDataValue;
@@ -173,11 +179,12 @@ trait DatesFunctions
         $result = [];
 
         $dates = collect(
-            CarbonPeriod::between(
+            new CarbonPeriod(
                 $this->carbon()->startOfMonth()->format('Y-m-d'),
+                '1 week',
                 $this->carbon()->format('Y-m-d')
-            )->interval('1 week'))
-            ->map(fn ($date) => 'Week '.Carbon::parse($date)->locale(self::locale())->week)->toArray();
+            ))
+            ->map(fn (Carbon $date) => 'Week '.$date->locale(self::locale())->week)->toArray();
 
         foreach ($dates as $date) {
             $result[$date] = $this->missingDataValue;
@@ -191,11 +198,12 @@ trait DatesFunctions
         $result = [];
 
         $dates = collect(
-            CarbonPeriod::between(
-                $this->carbon()->subYears($this->count),
-                $this->carbon()
-            )->interval('1 year'))
-            ->map(fn ($date) => Carbon::parse($date)->locale(self::locale())->year)->toArray();
+            new CarbonPeriod(
+                $this->carbon()->subYears($this->count)->format('Y-m-d'),
+                '1 year',
+                $this->carbon()->format('Y-m-d')
+            ))
+            ->map(fn (Carbon $date) => $date->locale(self::locale())->year)->toArray();
 
         foreach ($dates as $date) {
             $result[$date] = $this->missingDataValue;
@@ -211,7 +219,7 @@ trait DatesFunctions
         $labelColumn = explode('.', $this->labelColumn)[1];
 
         $missingDataLabels = empty($this->missingDataLabels)
-            ? DB::table($this->table)->get()->pluck($labelColumn)->toArray()
+            ? DB::table($this->table)->distinct()->pluck($labelColumn)->toArray()
             : $this->missingDataLabels;
 
         foreach ($missingDataLabels as $label) {
@@ -224,18 +232,19 @@ trait DatesFunctions
     protected function getCustomPeriod(): array
     {
         return collect(
-            CarbonPeriod::between(
+            new CarbonPeriod(
                 $this->period[0],
+                '1 '.$this->groupBy,
                 $this->period[1]
-            )->interval('1 '.$this->groupBy))
-            ->map(fn ($date) => Carbon::parse($date)->format('Y-m-d'))->toArray();
+            ))
+            ->map(fn (Carbon $date) => $date->format('Y-m-d'))->toArray();
     }
 
     protected function getPeriod(): array
     {
         return match ($this->period) {
             Period::MONTH->value => $this->getMonthsData(),
-            Period::DAY->value => $this->getDaysData(),
+            Period::DAY->value, Period::TODAY->value => $this->getDaysData(),
             Period::WEEK->value => $this->getWeeksData(),
             default => $this->getYearsData()
         };

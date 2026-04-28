@@ -61,6 +61,10 @@ class LaravelMetrics
 
     protected array $groupedDataLabels = [];
 
+    protected string $groupedDataAggregate = '';
+
+    protected array $groupedDataBindings = [];
+
     public function __construct(protected Builder|QueryBuilder $builder)
     {
         $this->table = $this->builder->from;
@@ -521,9 +525,11 @@ class LaravelMetrics
 
     protected function trendsData(): Collection
     {
+        $this->buildGroupedData();
+
         if (is_array($this->period)) {
             return $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel($this->formatDateColumn(), false).$this->groupedData)
+                ->selectRaw($this->asData().', '.$this->asLabel($this->formatDateColumn(), false).$this->groupedData, $this->groupedDataBindings)
                 ->whereBetween(DB::raw($this->formatDateColumn()), [$this->period[0], $this->period[1]])
                 ->groupBy('label')
                 ->orderBy('label')
@@ -532,7 +538,7 @@ class LaravelMetrics
 
         return match ($this->period) {
             Period::DAY->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::DAY->value).$this->groupedData)
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::DAY->value).$this->groupedData, $this->groupedDataBindings)
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
@@ -546,7 +552,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::WEEK->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::WEEK->value).$this->groupedData)
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::WEEK->value).$this->groupedData, $this->groupedDataBindings)
                 ->whereYear($this->dateColumn, $this->year)
                 ->whereMonth($this->dateColumn, $this->month)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
@@ -560,7 +566,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::MONTH->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::MONTH->value).$this->groupedData)
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::MONTH->value).$this->groupedData, $this->groupedDataBindings)
                 ->whereYear($this->dateColumn, $this->year)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::MONTH->value)), $this->month);
@@ -573,7 +579,7 @@ class LaravelMetrics
                 ->get(),
 
             Period::YEAR->value => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel(Period::YEAR->value).$this->groupedData)
+                ->selectRaw($this->asData().', '.$this->asLabel(Period::YEAR->value).$this->groupedData, $this->groupedDataBindings)
                 ->when($this->count === 1, function (Builder|QueryBuilder $query) {
                     return $query->where(DB::raw($this->formatPeriod(Period::YEAR->value)), $this->year);
                 })
@@ -587,7 +593,7 @@ class LaravelMetrics
                 ->get(),
 
             default => $this->builder
-                ->selectRaw($this->asData().', '.$this->asLabel().$this->groupedData)
+                ->selectRaw($this->asData().', '.$this->asLabel().$this->groupedData, $this->groupedDataBindings)
                 ->groupBy('label')
                 ->orderBy('label')
                 ->get(),
@@ -597,15 +603,25 @@ class LaravelMetrics
     public function groupData(array $dataLabels, string $aggregate): self
     {
         $this->groupedDataLabels = $dataLabels;
+        $this->groupedDataAggregate = $aggregate;
+
+        return $this;
+    }
+
+    protected function buildGroupedData(): void
+    {
+        if (empty($this->groupedDataLabels)) {
+            return;
+        }
+
         $result = [];
 
-        foreach ($dataLabels as $key => $value) {
-            $result[] = $aggregate.'('.$this->column.' = "'.$value.'")'." as data$key";
+        foreach ($this->groupedDataLabels as $key => $value) {
+            $result[] = $this->groupedDataAggregate.'('.$this->column.' = ?)'." as data$key";
+            $this->groupedDataBindings[] = $value;
         }
 
         $this->groupedData = ', '.implode(', ', $result);
-
-        return $this;
     }
 
     protected function asData(string $name = 'data'): string
@@ -640,7 +656,7 @@ class LaravelMetrics
             if ($dataForDate) {
                 $result[] = [
                     'label' => $dataForDate['label'],
-                    'data' => (int) $dataForDate[$dataLabel],
+                    'data' => (float) $dataForDate[$dataLabel],
                 ];
             } else {
                 $result[] = [
@@ -699,7 +715,7 @@ class LaravelMetrics
             throw new InvalidVariationsCountException;
         }
 
-        $laravelMetrics = (new self(DB::table($this->table)))
+        $laravelMetrics = (new self(clone $this->builder))
             ->by($previousPeriod, $previousCount)
             ->aggregate($this->aggregate, str_replace($this->table.'.', '', $this->column));
 
@@ -808,15 +824,15 @@ class LaravelMetrics
      */
     public function trends(bool $inPercent = false): array
     {
+        if (! empty($this->groupedDataLabels)) {
+            return $this->trendsWithMergedData($inPercent);
+        }
+
         $trendsData = $this
             ->trendsData()
             ->toArray();
 
         $trendsData = array_map(fn ($datum) => (array) $datum, $trendsData);
-
-        if (! empty($this->groupedDataLabels)) {
-            return $this->trendsWithMergedData($inPercent);
-        }
 
         return $this->getFormattedTrendsData($trendsData, $inPercent);
     }
@@ -832,7 +848,7 @@ class LaravelMetrics
 
         foreach ($data as $datum) {
             $result['labels'][] = $datum['label'];
-            $result['data'][] = (int) $datum[$dataLabel];
+            $result['data'][] = (float) $datum[$dataLabel];
             $total += $datum[$dataLabel];
         }
 
