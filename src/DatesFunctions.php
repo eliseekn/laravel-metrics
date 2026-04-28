@@ -54,7 +54,7 @@ trait DatesFunctions
         return [$this->carbon()->subMonths($this->count)->month, $month];
     }
 
-    protected function formatPeriod(string $period): string
+    protected function formatPeriod(?string $period = null): string
     {
         $driver = $this->builder->getConnection()->getDriverName();
 
@@ -63,7 +63,8 @@ trait DatesFunctions
                 Period::TODAY->value, Period::DAY->value => "day($this->dateColumn)",
                 Period::WEEK->value => "week($this->dateColumn)",
                 Period::MONTH->value => "month($this->dateColumn)",
-                default => "year($this->dateColumn)",
+                Period::YEAR->value => "year($this->dateColumn)",
+                default => $this->dateColumn,
             };
         }
 
@@ -72,7 +73,8 @@ trait DatesFunctions
                 Period::TODAY->value, Period::DAY->value => "EXTRACT(DAY FROM $this->dateColumn)",
                 Period::WEEK->value => "EXTRACT(WEEK FROM $this->dateColumn)",
                 Period::MONTH->value => "EXTRACT(MONTH FROM $this->dateColumn)",
-                default => "EXTRACT(YEAR FROM $this->dateColumn)",
+                Period::YEAR->value => "EXTRACT(YEAR FROM $this->dateColumn)",
+                default => $this->dateColumn,
             };
         }
 
@@ -80,7 +82,8 @@ trait DatesFunctions
             Period::TODAY->value, Period::DAY->value => "strftime('%d', $this->dateColumn)",
             Period::WEEK->value => "strftime('%W', $this->dateColumn)",
             Period::MONTH->value => "strftime('%m', $this->dateColumn)",
-            default => "strftime('%Y', $this->dateColumn)",
+            Period::YEAR->value => "strftime('%Y', $this->dateColumn)",
+            default => $this->dateColumn,
         };
     }
 
@@ -124,7 +127,7 @@ trait DatesFunctions
             $d = DateTime::createFromFormat('Y-m-d', $date);
 
             if (! $d || $d->format('Y-m-d') !== $date) {
-                throw new InvalidDateFormatException();
+                throw new InvalidDateFormatException;
             }
         }
     }

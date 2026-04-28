@@ -91,7 +91,7 @@ class LaravelMetrics
         $period = strtolower($period);
 
         if (! in_array($period, Period::values())) {
-            throw new InvalidPeriodException();
+            throw new InvalidPeriodException;
         }
 
         $this->period = $period;
@@ -194,7 +194,7 @@ class LaravelMetrics
         $aggregate = strtolower($aggregate);
 
         if (! in_array($aggregate, Aggregate::values())) {
-            throw new InvalidAggregateException();
+            throw new InvalidAggregateException;
         }
 
         $this->aggregate = $aggregate;
@@ -613,15 +613,19 @@ class LaravelMetrics
         return "$this->aggregate($this->column) as $name";
     }
 
-    protected function asLabel(string $label = null, bool $format = true): string
+    protected function asLabel(?string $label = null, bool $format = true): string
     {
-        if (is_null($this->labelColumn)) {
-            $label = ! $format ? $label : $this->formatPeriod($label);
-        } else {
-            $label = $this->labelColumn;
+        if (! is_null($this->labelColumn)) {
+            return $this->labelColumn.' as label';
         }
 
-        return $label.' as label';
+        if (! is_null($label)) {
+            $label = ! $format ? $label : $this->formatPeriod($label);
+
+            return $label.' as label';
+        }
+
+        return $this->formatPeriod().' as label';
     }
 
     protected function populateMissingDataForPeriod(array $data, bool $inPercent = false, string $dataLabel = 'data'): array
@@ -688,11 +692,11 @@ class LaravelMetrics
     public function metricsWithVariations(int $previousCount, string $previousPeriod, bool $inPercent = false): array
     {
         if (! in_array($previousPeriod, Period::values())) {
-            throw new InvalidPeriodException();
+            throw new InvalidPeriodException;
         }
 
         if ($previousCount <= 0) {
-            throw new InvalidVariationsCountException();
+            throw new InvalidVariationsCountException;
         }
 
         $laravelMetrics = (new self(DB::table($this->table)))
@@ -852,4 +856,3 @@ class LaravelMetrics
         return Config::get('app.locale');
     }
 }
-
