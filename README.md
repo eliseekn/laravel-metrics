@@ -20,7 +20,7 @@ composer require eliseekn/laravel-metrics
 
 ## Features
 
-- MySQ, PostgreSQL and SQLite support
+- MySQL, PostgreSQL and SQLite support
 - Verbose query builder
 - Custom columns and table definition
 - Days and months translation with Carbon
