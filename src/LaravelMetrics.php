@@ -617,7 +617,7 @@ class LaravelMetrics
         $result = [];
 
         foreach ($this->groupedDataLabels as $key => $value) {
-            $result[] = $this->groupedDataAggregate.'('.$this->column.' = ?)'." as data$key";
+            $result[] = $this->groupedDataAggregate.'(CASE WHEN '.$this->column.' = ? THEN 1 ELSE 0 END)'." as data$key";
             $this->groupedDataBindings[] = $value;
         }
 
