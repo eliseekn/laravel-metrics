@@ -9,7 +9,7 @@ Generate easily metrics and trends data of your models for your dashboards.
 
 ```bash
 PHP ^8.2.x
-Laravel ^11.x, ˆ12.x
+Laravel ^11.x, ^12.x
 ```
 
 **_Note :_** For Laravel 13.x support check [4.x](https://github.com/eliseekn/laravel-metrics/tree/4.x) branch.
