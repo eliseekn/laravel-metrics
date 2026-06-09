@@ -106,15 +106,15 @@ trait DatesFunctions
             }
 
             if ($this->period === Period::MONTH->value) {
-                $datum['label'] = Carbon::parse(sprintf('%04d-%02d', $this->year, (int) $datum['label']))->locale(self::locale())->monthName;
+                $datum['label'] = Carbon::parse(sprintf('%04d-%02d', $this->year, (int) $datum['label']))->locale($this->locale())->monthName;
             } elseif ($this->period === Period::DAY->value) {
-                $datum['label'] = Carbon::parse(sprintf('%04d-%02d-%02d', $this->year, $this->month, (int) $datum['label']))->locale(self::locale())->dayName;
+                $datum['label'] = Carbon::parse(sprintf('%04d-%02d-%02d', $this->year, $this->month, (int) $datum['label']))->locale($this->locale())->dayName;
             } elseif ($this->period === Period::WEEK->value) {
                 $datum['label'] = 'Week '.$datum['label'];
             } elseif ($this->period === Period::YEAR->value) {
                 $datum['label'] = intval($datum['label']);
             } else {
-                $datum['label'] = Carbon::parse($datum['label'])->locale(self::locale())->isoFormat($this->dateIsoFormat);
+                $datum['label'] = Carbon::parse($datum['label'])->locale($this->locale())->isoFormat($this->dateIsoFormat);
             }
 
             return $datum;
@@ -146,7 +146,7 @@ trait DatesFunctions
                 '1 month',
                 $endDate
             ))
-            ->map(fn (Carbon $date) => $date->locale(self::locale())->monthName)->toArray();
+            ->map(fn (Carbon $date) => $date->locale($this->locale())->monthName)->toArray();
 
         foreach ($dates as $date) {
             $result[$date] = $this->missingDataValue;
@@ -165,7 +165,7 @@ trait DatesFunctions
                 '1 day',
                 $this->carbon()->format('Y-m-d')
             ))
-            ->map(fn (Carbon $date) => $date->locale(self::locale())->dayName)->toArray();
+            ->map(fn (Carbon $date) => $date->locale($this->locale())->dayName)->toArray();
 
         foreach ($dates as $date) {
             $result[$date] = $this->missingDataValue;
@@ -184,7 +184,7 @@ trait DatesFunctions
                 '1 week',
                 $this->carbon()->format('Y-m-d')
             ))
-            ->map(fn (Carbon $date) => 'Week '.$date->locale(self::locale())->week)->toArray();
+            ->map(fn (Carbon $date) => 'Week '.$date->locale($this->locale())->week)->toArray();
 
         foreach ($dates as $date) {
             $result[$date] = $this->missingDataValue;
@@ -203,7 +203,7 @@ trait DatesFunctions
                 '1 year',
                 $this->carbon()->format('Y-m-d')
             ))
-            ->map(fn (Carbon $date) => $date->locale(self::locale())->year)->toArray();
+            ->map(fn (Carbon $date) => $date->locale($this->locale())->year)->toArray();
 
         foreach ($dates as $date) {
             $result[$date] = $this->missingDataValue;
