@@ -7,9 +7,13 @@ namespace Eliseekn\LaravelMetrics\Enums;
 enum Period: string
 {
     case TODAY = 'today';
+
     case DAY = 'day';
+
     case WEEK = 'week';
+
     case MONTH = 'month';
+
     case YEAR = 'year';
 
     public static function values(): array
