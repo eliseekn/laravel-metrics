@@ -12,8 +12,6 @@ PHP ^8.2.x
 Laravel ^13.x
 ```
 
-**_Note :_** For Laravel 13.x support check [4.x](https://github.com/eliseekn/laravel-metrics/tree/4.x) branch.
-
 ## Installation
 
 ```bash
